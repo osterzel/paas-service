@@ -1,1 +1,1 @@
-web: gunicorn --workers=3 server:app
+web: python monitor.py& && gunicorn --workers=3 server:app

@@ -1,0 +1,156 @@
+{% extends "admin/base.html" %}
+{% block body %}
+
+       
+
+        <script>
+
+	       $.fn.editable.defaults.mode = 'inline'
+	       $.fn.editable.defaults.ajaxOptions = { type: "PATCH", contentType: "application/json" }
+
+	       $(document).ready(function() {
+
+   	          $('#enable').click(function() {
+	            $('#mainoptions .editable').editable('toggleDisabled');
+	            $('#environmentoptions .editable').editable('toggleDisabled');
+	          });    	
+
+  		  $('#hosts').editable({
+			url: '/api/global',
+	       		params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log(send_data);
+				return JSON.stringify(send_data);
+	       		}
+		  });
+
+          {% for environment_entry in global_environment %}
+                  $('#{{environment_entry}}').editable({
+                        url: '/api/global',
+                        params: function(params) {
+                                send_data = {};
+                                send_data['environment'] = {};
+                                key = params['name'];
+                                value = params['value'];
+                                send_data['environment'][key] = value;
+                                console.log( send_data);
+                                return JSON.stringify(send_data);
+                        }
+                  });
+          {% endfor %}
+
+		  $('#mainoptions .editable').editable('toggleDisabled');
+		  $('#environmentoptions .editable').editable('toggleDisabled');
+
+	       $('.newvariable').editable({
+			url: '/api/global',
+			     validate: {
+         			key: function(v) {if(v == '') return 'Required field!'}
+      		 	      }, 
+			params: function(params) {
+				console.log(params);
+				return params;
+			}
+		});
+
+   $('#save-btn').click(function() {
+    var data,
+        $elems = $('.newvariable'),
+        errors = $elems.editable('validate'); //run validation for all values
+    if($.isEmptyObject(errors)) {
+        data = $elems.editable('getValue'); //get all values
+	// Setup proper fields
+	send_data = {};
+	send_data['environment'] = {};
+	send_data['environment'][data['key']] = data['value'];
+	console.log(JSON.stringify(send_data));
+        $.ajax({
+            type: 'PATCH',
+            url: '/api/global',
+	    contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(send_data), 
+            dataType: 'json'
+        }).success(function(response) {
+	    setTimeout("location.reload(true);", 1000);
+        }).error(function() {
+           /* ajax error */
+	   console.log("Error reported");
+        });
+    } else {
+        /* client-side validation error */
+	console.log("Cliendsite error reported");
+    }	
+   });
+
+	       });
+
+        </script>
+
+
+        <div class="row">
+          <div class="col-lg-12">
+            <h1>Global Configuration</h1>
+          </div>
+        </div><!-- /.row -->
+
+	<div class="row">
+          <div class="col-lg-6">
+            <h2>Configuration</h2>
+	    <button id="enable" class="btn btn-default">enable/disable editing</button> 
+            <div class="table-responsive">
+              <table id="mainoptions" class="table table-bordered table-hover table-striped tablesorter">
+                <thead>
+                  <tr>
+                    <th>Item<i class="fa fa-sort"></i></th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+			        <tr>
+				        <td>Cluster Hosts</td>
+				        <td><a href="#" id="hosts" data-type="select2" data-pk="1">{{ hosts }}</a></td>
+			        </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <h2>Environment Variables</h2>
+	        <p>To remove an environment variable make its value empty.</p>
+
+            <div class="table-responsive">
+            <table id="environmentoptions" class="table table-bordered table-hover table-striped tablesorter">
+                <thead>
+                  <tr>
+                    <th>Item<i class="fa fa-sort"></i></th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+		            {% for environment_entry in global_environment %}
+			            <tr>
+				            <td>{{ environment_entry}}</td>
+				            <td><a href="#" id="{{environment_entry}}" data-type="text" data-pk="1">{{ global_environment[environment_entry] }}</a></td>
+			            </tr>
+		            {% endfor %}
+                </tbody>
+            </table>
+		    <table border=0 width=100% valign=top>
+			    <tr>
+				    <td>Key: <a href="#" class="newvariable" data-type="text" data-name="key" data-original-title="Key"></a></td>
+				    <td>Value: <a href="#" class="newvariable" data-type="text" data-name="value" data-original-title="Value"></a></td>
+				    <td><button id="save-btn" class="btn btn-primary">Save Variable</button></td>
+			    </tr>
+		    </table>
+            </div>
+
+          </div>
+
+	</div> <!-- /.row-->
+
+
+{% endblock %}
