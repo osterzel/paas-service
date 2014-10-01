@@ -81,50 +81,52 @@
 		});
 
    $('#save-btn').click(function() {
-    var data,
+        var data,
         $elems = $('.newvariable'),
         errors = $elems.editable('validate'); //run validation for all values
-    if($.isEmptyObject(errors)) {
-        data = $elems.editable('getValue'); //get all values
-	// Setup proper fields
-	send_data = {};
-	send_data['environment'] = {};
-	send_data['environment'][data['key']] = data['value'];
-	console.log(JSON.stringify(send_data));
-        $.ajax({
-            type: 'PATCH',
-            url: '/api/app/{{ app.name }}',
-	    contentType: "application/json; charset=utf-8",
-            data: JSON.stringify(send_data), 
-            dataType: 'json'
-        }).success(function(response) {
-	    setTimeout("location.reload(true);", 1000);
-        }).error(function() {
-           /* ajax error */
-	   console.log("Error reported");
-        });
-    } else {
-        /* client-side validation error */
-	console.log("Cliendsite error reported");
-    }	
+        if($.isEmptyObject(errors)) {
+            data = $elems.editable('getValue'); //get all values
+	    // Setup proper fields
+	        send_data = {};
+	        send_data['environment'] = {};
+	        send_data['environment'][data['key']] = data['value'];
+	        console.log(JSON.stringify(send_data));
+            $.ajax({
+                type: 'PATCH',
+                url: '/api/app/{{ app.name }}',
+	            contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(send_data),
+                dataType: 'json'
+            }).success(function(response) {
+	            setTimeout("location.reload(true);", 1000);
+            }).error(function() {
+                /* ajax error */
+	            console.log("Error reported");
+            });
+        } else {
+            /* client-side validation error */
+	        console.log("Cliendsite error reported");
+        }
    });
 
-	       });
+    });
 
-               function sendRestart () {
-                        $.ajax({
-                                type: 'PATCH',
-                                url: '/api/app/{{ app.name }}',
-                                contentType:"application/json; charset=utf-8",
-                                dataType:"json",
-                                data:  '{ "restart": true }',
-                                success: function(data){
-                                }   // Success Function
-                        }); // AJAX Call
-                        setTimeout("location.reload(true);", 1000);
-                        return false;
-                };
-        </script>
+    function sendRestart () {
+         $.ajax({
+             type: 'PATCH',
+             url: '/api/app/{{ app.name }}',
+             contentType:"application/json; charset=utf-8",
+             dataType:"json",
+             data:  '{ "restart": true }',
+             success: function(data){
+         }   // Success Function
+         }); // AJAX Call
+         setTimeout("location.reload(true);", 1000);
+         return false;
+    };
+
+
+ </script>
 
 
         <div class="row">
@@ -233,8 +235,8 @@
 		    </table>
             </div>
 
-            {% if app.cluster_environment %}
-            <h2>Cluster Environment Variables</h2>
+            {% if app.global_environment %}
+            <h2>Global Environment Variables</h2>
             <div class="table-responsive">
               <table id="clusterenv" class="table table-bordered table-hover table-striped tablesorter">
                 <thead>
@@ -244,10 +246,10 @@
                   </tr>
                 </thead>
                 <tbody>
-		        {% for cluster_environment_entry in app.cluster_environment %}
+		        {% for global_environment_entry in app.global_environment %}
 			        <tr>
-				        <td>{{ environment_entry}}</td>
-				        <td><a href="#" id="{{cluster_environment_entry}}" data-type="text" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
+				        <td>{{ global_environment_entry}}</td>
+				        <td>{{ app.global_environment[global_environment_entry] }}</td>
 			        </tr>
 		        {% endfor %}
                 </tbody>

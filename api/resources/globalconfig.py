@@ -34,17 +34,17 @@ class GlobalConfig(object):
 
     def update_environment(self, data):
 
-        args = json.dumps(data)
-
-        if "environment" in args:
-            to_set = {k:v for k,v in args["environment"].items() if v}
+        if "environment" in data:
+            to_set = {k:v for k,v in data["environment"].items() if v}
             if to_set:
                 self.redis_conn.hmset("global:environment", to_set)
-            to_remove = [k for k,v in args["environment"].items() if not v ]
+            to_remove = [k for k,v in data["environment"].items() if not v ]
             if to_remove:
                 self.redis_conn.hdel("global:environment", *to_remove)
 
-        if "hosts" in args:
+        if "hosts" in data:
             self.redis_conn.delete("hosts")
-            for host in args['hosts']:
+            for host in data['hosts']:
                 self.redis_conn.sadd("hosts", host)
+
+        return self.get('all')

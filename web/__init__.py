@@ -42,8 +42,7 @@ def application_admin(app_name):
 
     app = g.redis_conn.hgetall("app#{}".format(app_name))
     app["environment"] = g.redis_conn.hgetall("{}:environment".format(app_name))
-    if "cluster_name" in app:
-        app["cluster_environment"] = g.redis_conn.hgetall("cluster#{}:environment".format(app['cluster_name']))
+    app["global_environment"] = g.redis_conn.hgetall("global:environment")
     events = get_events(app_name)
     events.reverse()
 

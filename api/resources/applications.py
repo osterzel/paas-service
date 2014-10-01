@@ -65,11 +65,13 @@ class Applications(object):
         return self.get_app(name)
 
     def update_application(self, name, data):
+
         if not self.redis_conn.exists("app#{}".format(name)):
             raise Exception
         if self.redis_conn.hget("app#{}".format(name), "state") == "deleting":
             raise Exception
         pipe = self.redis_conn.pipeline()
+
         if "restart" in data:
             environments = self.redis_conn.hgetall("{}:environment".format(name))
             try:
@@ -85,28 +87,34 @@ class Applications(object):
 
         if "ssl" in data:
             pipe.hset("app#{}".format(name), "ssl", data["ssl"])
+
         if "ssl_certificate_name" in data:
-            pipe.hset("app#{}".format(name), "ssl_certificate_name", self.data["ssl_certificate_name"])
-        if "memory_in_mb" in self.data:
-            pipe.hset("app#{}".format(name), "memory_in_mb", self.data["memory_in_mb"])
+            pipe.hset("app#{}".format(name), "ssl_certificate_name", data["ssl_certificate_name"])
+
+        if "memory_in_mb" in data:
+            pipe.hset("app#{}".format(name), "memory_in_mb", data["memory_in_mb"])
         else:
             pipe.hsetnx("app#{}".format(name), "memory_in_mb", 0)
-        if "docker_image" in self.data:
-            pipe.hset("app#{}".format(name), "docker_image", self.data["docker_image"])
-        if "command" in self.data:
-            pipe.hset("app#{}".format(name), "command", self.data["command"])
-        if "environment" in self.data:
-            if "PORT" in self.data["environment"].keys():
+
+        if "docker_image" in data:
+            pipe.hset("app#{}".format(name), "docker_image", data["docker_image"])
+
+        if "command" in data:
+            pipe.hset("app#{}".format(name), "command", data["command"])
+
+        if "environment" in data:
+            if "PORT" in data["environment"].keys():
                 raise Exception
-            to_set = {k:v for k,v in self.data["environment"].items() if v}
+            to_set = {k:v for k,v in data["environment"].items() if v}
             if to_set:
                 pipe.hmset("{}:environment".format(name), to_set)
-            to_remove = [k for k,v in self.data["environment"].items() if not v ]
+            to_remove = [k for k,v in data["environment"].items() if not v ]
             if to_remove:
                 pipe.hdel("{}:environment".format(name), *to_remove)
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
         write_event("UPDATED APP", "App {} was updated".format(name), name)
+
         return self.get(name)
 
 

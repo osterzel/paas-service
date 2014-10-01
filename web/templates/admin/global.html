@@ -16,7 +16,7 @@
 	          });    	
 
   		  $('#hosts').editable({
-			url: '/api/global',
+			url: '/api/global/',
 	       		params: function(params) {
 				send_data = {};
 				key = params['name'];
@@ -29,7 +29,7 @@
 
           {% for environment_entry in global_environment %}
                   $('#{{environment_entry}}').editable({
-                        url: '/api/global',
+                        url: '/api/global/',
                         params: function(params) {
                                 send_data = {};
                                 send_data['environment'] = {};
@@ -46,7 +46,7 @@
 		  $('#environmentoptions .editable').editable('toggleDisabled');
 
 	       $('.newvariable').editable({
-			url: '/api/global',
+			url: '/api/global/',
 			     validate: {
          			key: function(v) {if(v == '') return 'Required field!'}
       		 	      }, 
@@ -60,29 +60,29 @@
     var data,
         $elems = $('.newvariable'),
         errors = $elems.editable('validate'); //run validation for all values
-    if($.isEmptyObject(errors)) {
-        data = $elems.editable('getValue'); //get all values
-	// Setup proper fields
-	send_data = {};
-	send_data['environment'] = {};
-	send_data['environment'][data['key']] = data['value'];
-	console.log(JSON.stringify(send_data));
-        $.ajax({
-            type: 'PATCH',
-            url: '/api/global',
-	    contentType: "application/json; charset=utf-8",
-            data: JSON.stringify(send_data), 
-            dataType: 'json'
-        }).success(function(response) {
-	    setTimeout("location.reload(true);", 1000);
-        }).error(function() {
-           /* ajax error */
-	   console.log("Error reported");
-        });
-    } else {
-        /* client-side validation error */
-	console.log("Cliendsite error reported");
-    }	
+        if($.isEmptyObject(errors)) {
+            data = $elems.editable('getValue'); //get all values
+	        // Setup proper fields
+	        send_data = {};
+	        send_data['environment'] = {};
+	        send_data['environment'][data['key']] = data['value'];
+	        console.log(JSON.stringify(send_data));
+            $.ajax({
+                type: 'PATCH',
+                url: '/api/global/environment',
+	            contentType: "application/json; charset=utf-8",
+                data: JSON.stringify(send_data),
+                dataType: 'json'
+            }).success(function(response) {
+	            setTimeout("location.reload(true);", 1000);
+            }).error(function() {
+                /* ajax error */
+	            console.log("Error reported");
+            });
+        } else {
+            /* client-side validation error */
+	        console.log("Cliendsite error reported");
+        }
    });
 
 	       });

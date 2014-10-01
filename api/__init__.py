@@ -4,6 +4,7 @@ from flask import g, Blueprint, render_template, jsonify, redirect, request, Fla
 from flask.ext import restful
 from .resources.applications import *
 from .resources.globalconfig import *
+import json
 
 from config import Config
 import redis
@@ -16,8 +17,8 @@ api = Blueprint('api', __name__,
 @api.before_request
 def rest_initialization():
     g.config = Config()
-    #g.global_config = GlobalConfig(Config())
-    #g.applications = Applications(Config())
+    g.global_config = GlobalConfig(Config())
+    g.applications = Applications(Config())
     g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
 
 @api.after_request
@@ -59,9 +60,9 @@ class ApplicationRecord(restful.Resource):
 
         application_request = request.json
         try:
-            application_response = g.applications.update_application(name, **application_request)
-        except:
-            restful.abort(400)
+            application_response = g.applications.update_application(name, application_request)
+        except Exception as e:
+            restful.abort(400, message = e)
 
         return application_response, 201
 
@@ -95,19 +96,19 @@ class GlobalRecord(restful.Resource):
         except:
             restful.abort(404)
 
-    def post(self, type = None):
+    def patch(self, type = None):
         if not request.json:
             restful.abort(400)
 
-        global_request = restful.json
+        global_request = request.json
 
         try:
-            global_response = g.global_config.update_environment(**global_request)
-        except:
-            restful.abort(400, message = "Boo")
+            global_response = g.global_config.update_environment(global_request)
+        except Exception as e:
+            restful.abort(400, message = e)
 
         return global_response, 201
 
-#paas_api.add_resource(GlobalCollection, '/global', '/global/')
-#paas_api.add_resource(GlobalRecord, '/global/<string:type>')
+paas_api.add_resource(GlobalCollection, '/global', '/global/')
+paas_api.add_resource(GlobalRecord, '/global/<string:type>')
 
