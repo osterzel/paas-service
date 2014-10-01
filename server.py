@@ -3,7 +3,7 @@ __author__ = 'oliver'
 import os
 from flask import Flask
 from web import admin_web
-from api import api
+import api
 
 app = Flask(__name__)
 

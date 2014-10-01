@@ -15,7 +15,9 @@ class TestCluster(unittest.TestCase):
 
     def setUp(self):
         self.data = "123"
-        self.global_config = GlobalConfig()
+        self.config = MagicMock()
+        self.config.redis_host = "0.0.0.0"
+        self.global_config = GlobalConfig(self.config)
         self.app = flask.app
 
     def tearDown(self):
