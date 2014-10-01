@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_ENV_NAME="captain-venv"
+V_ENV_NAME="apimp-venv"
 if [ ! -d ${V_ENV_NAME} ] ;  then
     virtualenv ${V_ENV_NAME}
 fi
@@ -14,7 +14,7 @@ if [ $? != 0 ] ; then
 fi
 rm -fr target
 mkdir target
-nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-package=captain --cover-erase --cover-html-dir=target/coverage --cover-html
+nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html
 result=$?
 
 deactivate
