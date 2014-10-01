@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>PAAS Admin</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="/web/static/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Add custom CSS here -->
+    <link href="/web/static/css/sb-admin.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/font-awesome/css/font-awesome.min.css">
+    <!-- Page Specific CSS -->
+    <link rel="stylesheet" href="http://cdn.oesmith.co.uk/morris-0.4.3.min.css">
+    <script src="/web/static/js/jquery-2.0.3.min.js"></script>
+    <script src="/web/static/js/bootstrap.js"></script>
+    <link href="/web/static/css/bootstrap-editable.css" rel="stylesheet">
+    <script src="/web/static/js/bootstrap-editable.min.js"></script>
+
+  </head>
+
+  <body>
+
+    <div id="wrapper">
+
+      <!-- Sidebar -->
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <!-- Brand and toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/web">PAAS Admin</a>
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+          <ul class="nav navbar-nav side-nav">
+            <li class="active"><a href="/web/dashboard"><i class="fa fa-dashboard"></i> Dashboard</a></li>
+	    <li><a href="/web/events"><i class="fa fa-table"></i> Logs</a></li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="fa fa-caret-square-o-down"></i> Applications <b class="caret"></b></a>
+              <ul class="dropdown-menu">
+		{% for app in apps %}
+			<li><a href="/web/application/{{ app.name }}">{{ app.name }}</a></li>
+		{% endfor %}
+              </ul>
+            </li>
+          </ul>
+
+        </div><!-- /.navbar-collapse -->
+      </nav>
+
+      <div id="page-wrapper">
+	{% block body %}{% endblock %}
+      </div><!-- /#page-wrapper -->
+
+    </div><!-- /#wrapper -->
+
+    <!-- Page Specific Plugins -->
+    <script src="//cdnjs.cloudflare.com/ajax/libs/raphael/2.1.0/raphael-min.js"></script>
+    <script src="http://cdn.oesmith.co.uk/morris-0.4.3.min.js"></script>
+    <script src="/static/js/morris/chart-data-morris.js"></script>
+    <script src="/static/js/tablesorter/jquery.tablesorter.js"></script>
+    <script src="/static/js/tablesorter/tables.js"></script>
+
+  </body>
+</html>

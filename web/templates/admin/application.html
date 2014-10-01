@@ -1,0 +1,327 @@
+{% extends "admin/base.html" %}
+{% block body %}
+
+       
+
+        <script>
+
+	       $.fn.editable.defaults.mode = 'inline'
+	       $.fn.editable.defaults.ajaxOptions = { type: "PATCH", contentType: "application/json" }
+
+	       $(document).ready(function() {
+
+   	          $('#enable').click(function() {
+	            $('#mainoptions .editable').editable('toggleDisabled');
+	            $('#environmentoptions .editable').editable('toggleDisabled');
+	          });    	
+
+  		  $('#docker_image').editable({
+			url: '/api/app/{{ app.name }}',
+	       		params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+	       		}
+		  });
+
+  		  $('#command').editable({
+			url: '/api/app/{{ app.name }}',
+	       		params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+	       		}
+		  });
+
+  		  $('#memory_in_mb').editable({
+			url: '/api/app/{{ app.name }}',
+	       		params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+	       		}
+		  });
+
+                {% for environment_entry in app.environment %}
+                  $('#{{environment_entry}}').editable({
+                        url: '/api/app/{{ app.name }}',
+                        params: function(params) {
+                                send_data = {};
+                                send_data['environment'] = {};
+                                key = params['name'];
+                                value = params['value'];
+                                send_data['environment'][key] = value;
+                                console.log( send_data);
+                                return JSON.stringify(send_data);
+                        }
+                  });
+                {% endfor %}
+
+		  $('#mainoptions .editable').editable('toggleDisabled');
+		  $('#environmentoptions .editable').editable('toggleDisabled');
+
+	       $('.newvariable').editable({
+			url: '/api/app/{{ app.name }}',
+			     validate: {
+         			key: function(v) {if(v == '') return 'Required field!'}
+      		 	      }, 
+			params: function(params) {
+				console.log(params);
+				return params;
+			}
+		});
+
+   $('#save-btn').click(function() {
+    var data,
+        $elems = $('.newvariable'),
+        errors = $elems.editable('validate'); //run validation for all values
+    if($.isEmptyObject(errors)) {
+        data = $elems.editable('getValue'); //get all values
+	// Setup proper fields
+	send_data = {};
+	send_data['environment'] = {};
+	send_data['environment'][data['key']] = data['value'];
+	console.log(JSON.stringify(send_data));
+        $.ajax({
+            type: 'PATCH',
+            url: '/api/app/{{ app.name }}',
+	    contentType: "application/json; charset=utf-8",
+            data: JSON.stringify(send_data), 
+            dataType: 'json'
+        }).success(function(response) {
+	    setTimeout("location.reload(true);", 1000);
+        }).error(function() {
+           /* ajax error */
+	   console.log("Error reported");
+        });
+    } else {
+        /* client-side validation error */
+	console.log("Cliendsite error reported");
+    }	
+   });
+
+	       });
+
+               function sendRestart () {
+                        $.ajax({
+                                type: 'PATCH',
+                                url: '/api/app/{{ app.name }}',
+                                contentType:"application/json; charset=utf-8",
+                                dataType:"json",
+                                data:  '{ "restart": true }',
+                                success: function(data){
+                                }   // Success Function
+                        }); // AJAX Call
+                        setTimeout("location.reload(true);", 1000);
+                        return false;
+                };
+        </script>
+
+
+        <div class="row">
+          <div class="col-lg-12">
+            <h1>Application: {{ app.name }}</h1>
+          </div>
+        </div><!-- /.row -->
+
+	<div class="row">
+          <div class="col-lg-6">
+            <h2>Configuration</h2>
+	    <button id="enable" class="btn btn-default">enable/disable editing</button> 
+            <div class="table-responsive">
+              <table id="mainoptions" class="table table-bordered table-hover table-striped tablesorter">
+                <thead>
+                  <tr>
+                    <th>Item<i class="fa fa-sort"></i></th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+			<tr>
+				<td>Docker Image</td>
+				<td><a href="#" id="docker_image" data-type="text" data-pk="1">{{ app.docker_image }}</a></td>
+			</tr>
+			<tr>
+				<td>Docker Command</td>
+				<td><a href="#" id="command" data-type="text" data-pk="1">{{ app.command }}</a></td>
+			</tr>
+			<tr>
+				<td>Loadbalancer</td>
+				<td>{{ app.loadbalancer_name }}</td>
+			</tr>
+			<tr>
+				<td>Loadbalancer Address</td>
+				{% if app.loadbalancer_address == "None" %}
+				<td>
+				   {% for host in hosts %}
+					<a href="http://{{ host }}:{{ app.port }}/" target="_blank">http://{{ host }}:{{ app.port }}/</a><br>					
+				   {% endfor %}
+				</td>
+				{% else %}	
+				<td><a href="http://{{ app.loadbalancer_address }}" target="_blank">{{ app.loadbalancer_address }}</a></td>
+				{% endif %}
+			</tr>
+			<tr>
+				<td>SSL Enabled</td>
+				<td>{{ app.ssl }}</td>
+			</tr>
+			<tr>
+				<td>Backend Port</td>
+				<td>{{ app.port }}</td>
+			</tr>
+			<tr>
+				<td>Memory (MB)</td>
+				<td><a href="#" id="memory_in_mb" data-type="text" data-pk="1">{{ app.memory_in_mb }}</a></td>
+			</tr>
+			<tr>
+                <td>Status</td>
+                <td>
+                    {% if app.state == "RUNNING" %}
+		                <div class="panel panel-success">
+                               {% else %}
+		                <div class="panel panel-danger">
+			        {% endif %}
+				    {{ app.state }}
+                    </div>
+                </td>
+			</tr>
+			<tr>
+				<td>Application Actions</td>
+				<td><a href="#" id="restartbutton" onClick="return sendRestart();" class="btn btn-primary btn-large"><i class="icon-white icon-repeat"></i> Restart Application</a></td>
+			</tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <h2>Environment Variables</h2>
+	        <p>To remove an environment variable make its value empty.</p>
+
+            <div class="table-responsive">
+            <table id="environmentoptions" class="table table-bordered table-hover table-striped tablesorter">
+                <thead>
+                  <tr>
+                    <th>Item<i class="fa fa-sort"></i></th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+		            {% for environment_entry in app.environment %}
+			            <tr>
+				            <td>{{ environment_entry}}</td>
+				            <td><a href="#" id="{{environment_entry}}" data-type="text" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
+			            </tr>
+		            {% endfor %}
+                </tbody>
+            </table>
+		    <table border=0 width=100% valign=top>
+			    <tr>
+				    <td>Key: <a href="#" class="newvariable" data-type="text" data-name="key" data-original-title="Key"></a></td>
+				    <td>Value: <a href="#" class="newvariable" data-type="text" data-name="value" data-original-title="Value"></a></td>
+				    <td><button id="save-btn" class="btn btn-primary">Save Variable</button></td>
+			    </tr>
+		    </table>
+            </div>
+
+            {% if app.cluster_environment %}
+            <h2>Cluster Environment Variables</h2>
+            <div class="table-responsive">
+              <table id="clusterenv" class="table table-bordered table-hover table-striped tablesorter">
+                <thead>
+                  <tr>
+                    <th>Item<i class="fa fa-sort"></i></th>
+                    <th>Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+		        {% for cluster_environment_entry in app.cluster_environment %}
+			        <tr>
+				        <td>{{ environment_entry}}</td>
+				        <td><a href="#" id="{{cluster_environment_entry}}" data-type="text" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
+			        </tr>
+		        {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+
+          </div>
+
+	</div> <!-- /.row-->
+
+        <div class="row">
+          <div class="col-lg-12">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+                <h3 class="panel-title"><i class="fa fa-money"></i> Application Events</h3>
+              </div>
+              <div class="panel-body">
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover table-striped tablesorter">
+                    <thead>
+                      <tr>
+                        <th>Event</th>
+                        <th>Event Date <i class="fa fa-sort"></i></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for event in events %}
+                      <tr>
+                        <td>{{ event[1] }}</td>
+                        <td>{{ event[0] }}</td>
+                      </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /.row -->
+
+
+        <div class="row">
+          <div class="col-lg-12">
+            <h2 id="nav-tabs">Host System Logs</h2>
+            <div class="bs-example">
+              <ul class="nav nav-tabs" style="margin-bottom: 15px;">
+                {% set count = 1 %}
+		{% for host in app_logs %}
+			{% if count == 1 %}	
+				<li class="active"><a href="#{{ host }}" data-toggle="tab">{{ host }}</a></li>
+				{% set count = 0 %}	
+			{% else %}
+				<li><a href="#{{ host }}" data-toggle="tab">{{ host }}</a></li>
+			{% endif %}
+		{% endfor %}
+              </ul>
+              <div id="myTabContent" class="tab-content">
+		{% set count = 1 %}
+		{% for host in app_logs %}
+			{% if count == 1 %}
+			<div class="tab-pane fade active in" id="{{ host }}">
+			{% set count = 0 %}
+			{% else %}
+			<div class="tab-pane fade in" id="{{ host }}">
+			{% endif %}
+				{% for logrow in app_logs[host] %}
+				{{ logrow }}<br>
+				{% endfor %} 
+			</div>
+		{% endfor %}
+              </div>
+            </div>
+          </div>
+        </div><!-- /.row -->
+
+{% endblock %}
