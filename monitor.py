@@ -25,6 +25,7 @@ docker.Client.pull = pull_fix
 
 import redis
 import time
+import threading
 
 import logging
 logging.basicConfig(level=logging.DEBUG)
@@ -49,7 +50,7 @@ def check_app(app_id):
     state = app_details["state"]
     environment = {}
     if app_details['cluster_name'] != None:
-        global_environment = redis_conn.hgetall("cluster#{}:environment".format(app_details['cluster_name']))
+        global_environment = redis_conn.hgetall("global:environment")
         environment.update(global_environment)
 
     environment.update(redis_conn.hgetall("{}:environment".format(app_id)))
