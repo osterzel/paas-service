@@ -34,7 +34,11 @@ requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.WARNING)
 requests_log.propogate = True
 
-redis_conn = redis.StrictRedis(db=0)
+from common.config import Config
+
+config = Config()
+
+redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
 def check_app(app_id):
     locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "120")

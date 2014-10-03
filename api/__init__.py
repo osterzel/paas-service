@@ -1,15 +1,15 @@
 __author__ = 'oliver'
 
-from flask import g, Blueprint, render_template, jsonify, redirect, request, Flask
-from flask.ext import restful
-from .resources.applications import *
-from .resources.globalconfig import *
-import json
+import hashlib
 
-from config import Config
+from flask import g, Blueprint, request
+from flask.ext import restful
 import redis
 
-import hashlib
+from .resources.applications import *
+from .resources.globalconfig import *
+from common.config import Config
+
 
 api = Blueprint('api', __name__,
                      template_folder='templates', static_folder='static')
