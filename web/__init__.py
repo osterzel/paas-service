@@ -1,6 +1,5 @@
 from flask import g, Blueprint, render_template, jsonify
 import redis
-from config import Config
 
 from os.path import dirname, realpath
 import sys
@@ -8,6 +7,7 @@ import sys
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
 from common.paasevents import get_events, write_event
+from common.config import Config
 
 admin_web = Blueprint('admin_web', __name__,
                      template_folder='templates', static_folder='static')

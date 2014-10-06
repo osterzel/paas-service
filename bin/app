@@ -1,5 +1,5 @@
 #!/bin/bash
 
-python monitor &
+python monitor.py &
 
 gunicorn --workers=3 server:app
