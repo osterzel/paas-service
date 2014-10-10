@@ -5,9 +5,11 @@ import time
 import datetime
 import os
 import logging
+from config import Config
 
-events_conn = redis.StrictRedis(db=2)
+config = Config()
 
+events_conn = redis.StrictRedis(config.redis_host, db=2)
 
 def write_event(event_type, message, app_name='global'):
     try:

@@ -34,6 +34,18 @@ class Applications(object):
         if not app_details:
             raise Exception
 
+        if not "urls" in app_details:
+            print "No urls found"
+            try:
+                main_url = app_details['name'] + app_details['global_environment']['domain_name']
+            except:
+                main_url = app_details['name']
+            urls = main_url
+
+            app_details['urls'] = main_url
+
+        app_details['hosts'] = list(self.redis_conn.smembers("hosts"))
+
         return app_details
 
     def create_application(self, data):
@@ -57,12 +69,12 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "port": port, "ssl": "false", "ssl_certificate_name": "", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "" })
+                "name": name, "port": port, "ssl": "false", "ssl_certificate_name": "", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
         write_event("CREATE APP", "Create app - {}".format(name), name)
-        return self.get_app(name)
+        return self.get(name)
 
     def update_application(self, name, data):
 
@@ -101,6 +113,9 @@ class Applications(object):
 
         if "command" in data:
             pipe.hset("app#{}".format(name), "command", data["command"])
+
+        if "urls" in data:
+            pipe.hset("app#{}".format(name), "urls", data["urls"])
 
         if "environment" in data:
             if "PORT" in data["environment"].keys():

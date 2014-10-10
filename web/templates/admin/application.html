@@ -51,6 +51,18 @@
 	       		}
 		  });
 
+ 		  $('#urls').editable({
+			url: '/api/app/{{ app.name }}',
+	       		params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+	       		}
+		  });
+
                 {% for environment_entry in app.environment %}
                   $('#{{environment_entry}}').editable({
                         url: '/api/app/{{ app.name }}',
@@ -156,26 +168,10 @@
 				<td>Docker Command</td>
 				<td><a href="#" id="command" data-type="text" data-pk="1">{{ app.command }}</a></td>
 			</tr>
-			<tr>
-				<td>Loadbalancer</td>
-				<td>{{ app.loadbalancer_name }}</td>
-			</tr>
-			<tr>
-				<td>Loadbalancer Address</td>
-				{% if app.loadbalancer_address == "None" %}
-				<td>
-				   {% for host in hosts %}
-					<a href="http://{{ host }}:{{ app.port }}/" target="_blank">http://{{ host }}:{{ app.port }}/</a><br>					
-				   {% endfor %}
-				</td>
-				{% else %}	
-				<td><a href="http://{{ app.loadbalancer_address }}" target="_blank">{{ app.loadbalancer_address }}</a></td>
-				{% endif %}
-			</tr>
-			<tr>
-				<td>SSL Enabled</td>
-				<td>{{ app.ssl }}</td>
-			</tr>
+            <tr>
+                <td>URLS</td>
+                <td><a href="#" id="urls" data-type="text" data-pk="1">{{ app.urls }}</a></td>
+            </tr>
 			<tr>
 				<td>Backend Port</td>
 				<td>{{ app.port }}</td>

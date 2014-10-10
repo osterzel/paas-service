@@ -53,9 +53,8 @@ def check_app(app_id):
     docker_image = app_details["docker_image"]
     state = app_details["state"]
     environment = {}
-    if app_details['cluster_name'] != None:
-        global_environment = redis_conn.hgetall("global:environment")
-        environment.update(global_environment)
+    global_environment = redis_conn.hgetall("global:environment")
+    environment.update(global_environment)
 
     environment.update(redis_conn.hgetall("{}:environment".format(app_id)))
 

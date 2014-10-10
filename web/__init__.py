@@ -9,13 +9,16 @@ sys.path.append(dirname(realpath(__file__)) + '../../' )
 from common.paasevents import get_events, write_event
 from common.config import Config
 
+from api.resources.applications import Applications
+
 admin_web = Blueprint('admin_web', __name__,
                      template_folder='templates', static_folder='static')
 
 @admin_web.before_request
 def rest_initialization():
-    g.config = Config()
-    g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
+     g.config = Config()
+     g.application = Applications(g.config)
+     g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
 
 @admin_web.route('/')
 @admin_web.route('/dashboard')
@@ -25,6 +28,7 @@ def admin_dashboard():
 
     apps = list()
     for app in list(g.redis_conn.smembers("apps")):
+        #app.append(Applications.get(app))
         apps.append(g.redis_conn.hgetall("app#{}".format(app)))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
@@ -40,9 +44,9 @@ def application_admin(app_name):
     for app in list(g.redis_conn.smembers("apps")):
         apps.append(g.redis_conn.hgetall("app#{}".format(app)))
 
-    app = g.redis_conn.hgetall("app#{}".format(app_name))
-    app["environment"] = g.redis_conn.hgetall("{}:environment".format(app_name))
-    app["global_environment"] = g.redis_conn.hgetall("global:environment")
+    app = g.application.get(app_name)
+    print app
+
     events = get_events(app_name)
     events.reverse()
 

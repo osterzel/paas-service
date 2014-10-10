@@ -40,9 +40,9 @@ class ApplicationCollection(restful.Resource):
 
         application_request = request.json
         try:
-            application_response = g.applications.create_application(**application_request)
-        except:
-            restful.abort(503)
+            application_response = g.applications.create_application(application_request)
+        except Exception as e:
+            restful.abort(503, message = e)
 
         return application_response, 201
 
