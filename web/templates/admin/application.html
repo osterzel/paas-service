@@ -170,7 +170,7 @@
 			</tr>
             <tr>
                 <td>URLS</td>
-                <td><a href="#" id="urls" data-type="text" data-pk="1">{{ app.urls }}</a></td>
+                <td><a href="#" id="urls" data-type="textarea" data-pk="1">{{ app.urls }}</a></td>
             </tr>
 			<tr>
 				<td>Backend Port</td>
@@ -216,8 +216,8 @@
                 <tbody>
 		            {% for environment_entry in app.environment %}
 			            <tr>
-				            <td>{{ environment_entry}}</td>
-				            <td><a href="#" id="{{environment_entry}}" data-type="text" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
+				            <td width="50%">{{ environment_entry}}</td>
+				            <td><a href="#" id="{{environment_entry}}" data-type="textarea" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
 			            </tr>
 		            {% endfor %}
                 </tbody>

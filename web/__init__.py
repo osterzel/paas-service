@@ -27,9 +27,8 @@ def admin_dashboard():
     events.reverse()
 
     apps = list()
-    for app in list(g.redis_conn.smembers("apps")):
-        #app.append(Applications.get(app))
-        apps.append(g.redis_conn.hgetall("app#{}".format(app)))
+    for app in list(g.application.get_all()['data']):
+        apps.append(g.application.get(app))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
 
@@ -41,11 +40,10 @@ def application_admin(app_name):
     print admin_web.static_url_path
 
     apps = list()
-    for app in list(g.redis_conn.smembers("apps")):
-        apps.append(g.redis_conn.hgetall("app#{}".format(app)))
+    for app in list(g.application.get_all()['data']):
+        apps.append(g.application.get(app))
 
     app = g.application.get(app_name)
-    print app
 
     events = get_events(app_name)
     events.reverse()
