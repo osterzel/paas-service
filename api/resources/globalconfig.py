@@ -26,7 +26,7 @@ class GlobalConfig(object):
         if type == 'all':
             return { "hosts": hosts, "environment": environment }
         elif type == 'environment':
-            return hosts
+            return environment
         elif type == 'hosts':
             return hosts
         else:
