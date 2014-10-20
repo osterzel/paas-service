@@ -24,11 +24,38 @@ class TestApplication(unittest.TestCase):
             "name": self.test_application
         }
 
+        self.update_record = {
+            "urls": "testapplication.localdomain.com",
+            "memory_in_mb": 128,
+            "command": "test command",
+            "docker_image": "test dockerimage"
+        }
+
 
     def tearDown(self):
+        self.teardown_application_record()
         pass
 
+    def setup_application_record(self):
+        try:
+            output = self.application.get(self.test_application)
+        except:
+            output = None
+
+        if output:
+            output = self.application.delete_application(self.test_application)
+
+        output = self.application.create_application(self.create_record)
+        return output
+
+    def teardown_application_record(self):
+        try:
+            output = self.application.delete_application(self.test_application)
+        except Exception:
+            print "Record does not exist"
+
     def test_application_lifecycle(self):
+        self.setup_application_record()
         try:
             output = self.application.get(self.test_application)
         except:
@@ -50,5 +77,21 @@ class TestApplication(unittest.TestCase):
 
         output = self.application.delete_application(self.test_application)
         self.assertEqual("Application deleted", output['message'])
+
+    def test_parameters(self):
+        output = self.setup_application_record()
+
+        self.assertEqual(output['name'], "testapplication")
+
+        output = self.application.update_application(self.test_application,self.update_record)
+        self.assertEqual(output['urls'], self.update_record['urls'])
+        self.assertEqual(output['memory_in_mb'], self.update_record['memory_in_mb'])
+        self.assertEqual(output['docker_image'], self.update_record['docker_image'])
+        self.assertEqual(output['command'], self.update_record['command'])
+
+
+
+
+
 
 
