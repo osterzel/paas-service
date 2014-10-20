@@ -2,4 +2,4 @@
 
 python monitor.py &
 
-gunicorn --workers=3 server:app
+gunicorn --workers=4 server:app
