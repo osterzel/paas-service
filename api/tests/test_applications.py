@@ -28,7 +28,8 @@ class TestApplication(unittest.TestCase):
             "urls": "testapplication.localdomain.com",
             "memory_in_mb": 128,
             "command": "test command",
-            "docker_image": "test dockerimage"
+            "docker_image": "test dockerimage",
+            "type": "daemon"
         }
 
 
@@ -88,6 +89,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(output['memory_in_mb'], self.update_record['memory_in_mb'])
         self.assertEqual(output['docker_image'], self.update_record['docker_image'])
         self.assertEqual(output['command'], self.update_record['command'])
+        self.assertEqual(output['type'], self.update_record['type'])
 
 
 

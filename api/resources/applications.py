@@ -69,7 +69,7 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "port": port, "ssl": "false", "ssl_certificate_name": "", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name })
+                "name": name, "port": port, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
@@ -97,12 +97,6 @@ class Applications(object):
 
         write_event("UPDATED APP", "App {}, restart called".format(name), name)
 
-        if "ssl" in data:
-            pipe.hset("app#{}".format(name), "ssl", data["ssl"])
-
-        if "ssl_certificate_name" in data:
-            pipe.hset("app#{}".format(name), "ssl_certificate_name", data["ssl_certificate_name"])
-
         if "memory_in_mb" in data:
             pipe.hset("app#{}".format(name), "memory_in_mb", data["memory_in_mb"])
         else:
@@ -116,6 +110,9 @@ class Applications(object):
 
         if "urls" in data:
             pipe.hset("app#{}".format(name), "urls", data["urls"])
+
+        if "type" in data:
+            pipe.hset("app#{}".format(name), "type", data['type'])
 
         if "environment" in data:
             if "PORT" in data["environment"].keys():
