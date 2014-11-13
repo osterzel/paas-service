@@ -53,9 +53,6 @@ def check_app(app_id):
     docker_image = app_details["docker_image"]
     state = app_details["state"]
     environment = {}
-    global_environment = redis_conn.hgetall("global:environment")
-    environment.update(global_environment)
-
     environment.update(redis_conn.hgetall("{}:environment".format(app_id)))
 
     memory = int(app_details["memory_in_mb"]) * 1024**2

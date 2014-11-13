@@ -216,7 +216,7 @@
                 <tbody>
 		            {% for environment_entry in app.environment %}
 			            <tr>
-				            <td width="50%">{{ environment_entry}}</td>
+				            <td width="50%">{{ environment_entry}} {% if app.global_environment[environment_entry] == app.environment[environment_entry] %}  <b>(Global)</b>{% endif %}</td>
 				            <td><a href="#" id="{{environment_entry}}" data-type="textarea" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
 			            </tr>
 		            {% endfor %}
@@ -231,29 +231,7 @@
 		    </table>
             </div>
 
-            {% if app.global_environment %}
-            <h2>Global Environment Variables</h2>
-            <div class="table-responsive">
-              <table id="clusterenv" class="table table-bordered table-hover table-striped tablesorter">
-                <thead>
-                  <tr>
-                    <th>Item<i class="fa fa-sort"></i></th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-		        {% for global_environment_entry in app.global_environment %}
-			        <tr>
-				        <td>{{ global_environment_entry}}</td>
-				        <td>{{ app.global_environment[global_environment_entry] }}</td>
-			        </tr>
-		        {% endfor %}
-                </tbody>
-              </table>
             </div>
-            {% endif %}
-
-          </div>
 
 	</div> <!-- /.row-->
 

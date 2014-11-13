@@ -32,11 +32,14 @@
                                 <div class="row">
 		                  <div class="col-xs-12">
 		                    <i class="fa fa-5x"></i>
-				    <p>Docker Image: {{ app.docker_image }}</p>
-                    <p>Docker Command: {{ app.command }}</p>
-				    <p>Backend Port: {{ app.port }}</p>
-				    <p>Memory(MB): {{ app.memory_in_mb }}</p>
-				    <p>Status: {{ app.state }}</p>
+				        <p>Docker Image: {{ app.docker_image }}</p>
+                        <p>Docker Command: {{ app.command }}</p>
+				        <p>Backend Port: {{ app.port }}</p>
+				        <p>Memory(MB): {{ app.memory_in_mb }}</p>
+                        {% if app.environment.SLUG_URL %}
+                        <p>Slug: {{ app.environment.SLUG_URL }}</p>
+                        {% endif %}
+				        <p>Status: {{ app.state }}</p>
 		                  </div>
 		                </div>
 		              </div>

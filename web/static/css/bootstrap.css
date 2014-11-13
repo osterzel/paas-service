@@ -5738,6 +5738,7 @@ a.list-group-item.active:focus .list-group-item-text {
   border-bottom: 1px solid transparent;
   border-top-right-radius: 3px;
   border-top-left-radius: 3px;
+  word-break: break-all;
 }
 
 .panel-heading > .dropdown .dropdown-toggle {

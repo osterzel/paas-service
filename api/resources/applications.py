@@ -25,7 +25,9 @@ class Applications(object):
         if not app_details:
             raise Exception
 
-        app_details["environment"] = self.redis_conn.hgetall("{}:environment".format(name))
+        app_details['environment'] = self.redis_conn.hgetall("global:environment")
+        app_details["environment"].update(self.redis_conn.hgetall("{}:environment".format(name)))
+
         if ( self.redis_conn.hgetall("global:environment")):
             app_details["global_environment"] = self.redis_conn.hgetall("global:environment")
 
