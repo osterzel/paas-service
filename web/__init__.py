@@ -31,7 +31,6 @@ def admin_dashboard():
         apps.append(g.application.get(app))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
-    print sorted_apps
 
     return render_template('admin/dashboard.html', events=events, apps = sorted_apps)
 

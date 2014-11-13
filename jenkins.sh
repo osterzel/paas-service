@@ -14,7 +14,7 @@ if [ $? != 0 ] ; then
 fi
 rm -fr target
 mkdir target
-nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html
+nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=api,web
 result=$?
 
 deactivate
