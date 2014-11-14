@@ -46,4 +46,3 @@ class TestServer(unittest.TestCase):
         self.assertEqual(200, output.status_code)
 
 
-

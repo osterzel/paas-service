@@ -101,8 +101,6 @@ class Applications(object):
 
         if "memory_in_mb" in data:
             pipe.hset("app#{}".format(name), "memory_in_mb", data["memory_in_mb"])
-        else:
-            pipe.hsetnx("app#{}".format(name), "memory_in_mb", 0)
 
         if "docker_image" in data:
             pipe.hset("app#{}".format(name), "docker_image", data["docker_image"])

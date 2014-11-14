@@ -45,5 +45,11 @@ class TestServer(unittest.TestCase):
         output = self.flask_app.get("/web/events")
         self.assertEqual(200, output.status_code)
 
+        output = self.flask_app.get("/web/application/nonfound_testapplication")
+        self.assertRaises(Exception)
+
+        output = self.flask_app.get("/web/global")
+        self.assertEqual(200, output.status_code)
+
 
 
