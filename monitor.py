@@ -86,7 +86,8 @@ def check_app(app_id):
                 current_environment = { entry.split("=")[0]: entry.split("=")[1] for entry in container_details["Config"]["Env"] }
                 current_memory = container_details["Config"]["Memory"]
                 current_command = container_details["Config"]["Cmd"]
-                del(current_environment["HOME"])
+                if "HOME" in current_environment:
+                    del(current_environment["HOME"])
                 del(current_environment["PATH"])
                 del(current_environment["PORT"])
                 if current_environment != environment or current_image != docker_image or current_memory != memory or current_command != command:
