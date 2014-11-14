@@ -41,7 +41,7 @@ config = Config()
 redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
 def check_app(app_id):
-    locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "120")
+    locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "10")
     if not locked:
         return
     logging.debug("checking {}".format(app_id))
@@ -68,7 +68,7 @@ def check_app(app_id):
 
     for node in redis_conn.smembers("hosts"):
 
-        c = docker.Client(base_url='http://{}:4243'.format(node), version="1.4")
+        c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
         docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
         if docker_id:
             try:
@@ -79,9 +79,8 @@ def check_app(app_id):
             except HTTPError:
                 container_details = { "State": { "Running": False } }
             if not container_details["State"]["Running"]:
-                c.remove_container(docker_id)
                 docker_id = None
-                redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
+                status = redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
             else:
                 current_image = container_details["Config"]["Image"]
                 current_environment = { entry.split("=")[0]: entry.split("=")[1] for entry in container_details["Config"]["Env"] }
@@ -109,7 +108,7 @@ def check_app(app_id):
                     c.remove_container(docker_id)
                     write_event("CONTAINER_MONITOR", "Docker container {} destroyed on node {} for app_id {}".format(docker_id, node, app_id))
                     docker_id = redis_conn.hdel("{}:{}".format(node, app_id), "docker_id")
-                    redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
+                    status = redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
                     redis_conn.delete("app#{}:locked".format(app_id))
                     return
 
@@ -128,7 +127,7 @@ def check_app(app_id):
 
             redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
             redis_conn.set("docker_id#{}".format(docker_id), app_id)
-            redis_conn.expire("app#{}:locked".format(app_id), 10)
+            redis_conn.expire("app#{}:locked".format(app_id), 2)
             return
 
     redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
@@ -138,13 +137,12 @@ def check_app(app_id):
 
 def check_nodes():
     for node in redis_conn.smembers("hosts"):
-        print node
-        c = docker.Client(base_url='http://{}:4243'.format(node), version="1.4")
+        c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
         for container in c.containers(all=True):
-            docker_id = container["Id"][:12]
+            docker_id = container["Id"]
             container_details = c.inspect_container(docker_id)
             app_id = redis_conn.get("docker_id#{}".format(docker_id))
-            if not container_details["State"]["Running"] or (docker_id != redis_conn.hget("{}:{}".format(node, app_id), "docker_id") or not redis_conn.exists("app#{}".format(app_id))):
+            if (docker_id != redis_conn.hget("{}:{}".format(node, app_id), "docker_id") or not redis_conn.exists("app#{}".format(app_id))):
                 print "stopping orphaned container {}".format(docker_id)
                 write_event("CONTAINER_MONITOR", "Destroying orphaned docker container {} on node {}".format(docker_id, node))
                 c.stop(docker_id)
