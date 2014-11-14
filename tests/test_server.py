@@ -46,7 +46,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(200, output.status_code)
 
         output = self.flask_app.get("/web/application/nonfound_testapplication")
-        self.assertRaises(Exception)
+        self.assertEqual(200, output.status_code)
 
         output = self.flask_app.get("/web/global")
         self.assertEqual(200, output.status_code)

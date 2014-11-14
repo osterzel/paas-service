@@ -43,7 +43,10 @@ def application_admin(app_name):
     for app in list(g.application.get_all()['data']):
         apps.append(g.application.get(app))
 
-    app = g.application.get(app_name)
+    try:
+        app = g.application.get(app_name)
+    except Exception:
+        app = {}
 
     events = get_events(app_name)
     events.reverse()
