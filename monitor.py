@@ -92,7 +92,7 @@ def check_app(app_id):
                 del(current_environment["PORT"])
                 if current_environment != environment or current_image != docker_image or current_memory != memory or current_command != command:
 
-                    #First fetch new image if its an image change
+                    #First fetch new image if its an image changed
                     if current_image != docker_image:
                         try:
                             redis_conn.hset("app#{}".format(app_id), "state", "Fetching image {} on host {}".format(docker_image, node))
