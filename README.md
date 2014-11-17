@@ -35,13 +35,12 @@ The web interface is available on /web/
 Global variables:
 ```
 curl /api/global/environment
-
+```
 
 ### Application endpoint
 
 /api/app/
 /api/app/<app-name>
-
 
 #Tests
 
