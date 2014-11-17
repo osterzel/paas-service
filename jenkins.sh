@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-V_ENV_NAME="apimp-venv"
+V_ENV_NAME="paas-controller-venv"
 if [ ! -d ${V_ENV_NAME} ] ;  then
     virtualenv ${V_ENV_NAME}
 fi
