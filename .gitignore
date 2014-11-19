@@ -3,3 +3,4 @@
 .coverage
 target
 paas-controller-venv
+*.swp
