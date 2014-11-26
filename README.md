@@ -52,7 +52,7 @@ $ ./jenkins.sh
 
 #API Documentation
 
--- Create an application
+#### Create an application
 ```
 
 curl -X POST -H 'Content-type: application/json' servername/api/app/ -d '{ "name": "my-application-name" }'
@@ -78,10 +78,7 @@ This would create a new application and return the current app details:
    }
 ```
 
-
-
-
-n application
+####Delete an application
 
 ```
 curl -X DELETE servername/api/app/my-application-name
