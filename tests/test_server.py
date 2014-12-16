@@ -26,13 +26,11 @@ class TestServer(unittest.TestCase):
         self.assertEqual(404, output.status_code)
 
     def test_api_endpoint_codes(self):
-        output = self.flask_app.get("/api")
-        self.assertEqual(404, output.status_code)
 
-        output = self.flask_app.get("/api/app/")
+        output = self.flask_app.get("/app/")
         self.assertEqual(200, output.status_code)
 
-        output = self.flask_app.get("/api/global/")
+        output = self.flask_app.get("/global/")
         self.assertEqual(200, output.status_code)
 
     def test_web_endpoint_codes(self):
