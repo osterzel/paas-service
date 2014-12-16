@@ -198,7 +198,7 @@ def monitor_loop():
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
                 logging.error("{} - {}".format(app_id, e))
 
-        time.sleep(0.10)
+        time.sleep(5)
 
 
 if __name__ == '__main__':
