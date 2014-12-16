@@ -199,8 +199,12 @@ def check_nodes():
 
 
 def monitor_loop():
+    first_app = None
     while True:
         app_id = redis_conn.rpoplpush("monitor", "monitor")
+        print app_id
+        if first_app == None:
+            first_app = app_id
         if app_id:
             try:
                 q.put(app_id)
@@ -208,7 +212,8 @@ def monitor_loop():
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
                 logging.error("{} - {}".format(app_id, e))
 
-        time.sleep(30)
+        if app_id == first_app:
+            time.sleep(10)
 
 def monitor_changes():
     #Setting up a pubsub for event handling
