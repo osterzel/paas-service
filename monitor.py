@@ -28,7 +28,19 @@ import time
 import threading
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger("monitor_logger")
+logger.setLevel(logging.DEBUG)
+
+ch = logging.StreamHandler()
+ch.setLevel(logging.DEBUG)
+
+formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s")
+
+ch.setFormatter(formatter)
+
+logger.addHandler(ch)
 
 requests_log = logging.getLogger("requests")
 requests_log.setLevel(logging.WARNING)
@@ -44,7 +56,7 @@ def check_app(app_id):
     locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "10")
     if not locked:
         return
-    logging.debug("checking {}".format(app_id))
+    logger.debug("checking {}".format(app_id))
 
     app_details = redis_conn.hgetall("app#{}".format(app_id))
 
@@ -62,11 +74,12 @@ def check_app(app_id):
         command = None
 
     if not docker_image:
-        logging.info("{} - image not set, skipping".format(app_id))
+        #logger.info("{} - image not set, skipping".format(app_id))
         redis_conn.expire("app#{}:locked".format(app_id), 10)
         return
 
     for node in redis_conn.smembers("hosts"):
+	logging.info("Checking containers on host {}".format(node)	
 
         c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
         docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
@@ -115,7 +128,7 @@ def check_app(app_id):
 
         if not docker_id:
             redis_conn.hset("app#{}".format(app_id), "state", "DEPLOYING to {}".format(node))
-            logging.info("{} - starting runner on {}".format(app_id, node))
+	    logger.info("{} - starting runner on {}".format(app_id, node))
             repository, _, tag = docker_image.rpartition(":")
             if repository == "":
                repository = docker_image
@@ -165,7 +178,7 @@ def monitor_loop():
             check_nodes()
         except Exception as e:
             logging.error("{}".format(e))
-        time.sleep(0.05)
+        time.sleep(0.10)
 
 if __name__ == '__main__':
 
