@@ -29,23 +29,18 @@ import threading
 
 import logging
 import socket
-logging.basicConfig(level=logging.INFO)
 
 logger = logging.getLogger("monitor_logger")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 
-formatter = logging.Formatter("%(asctime)s;%(levelname)s;%(message)s")
+formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
 
 ch.setFormatter(formatter)
 
 logger.addHandler(ch)
-
-requests_log = logging.getLogger("requests")
-requests_log.setLevel(logging.WARNING)
-requests_log.propogate = True
 
 from common.config import Config
 
@@ -197,12 +192,12 @@ def check_monitor_lock():
         check_host = redis_conn.get("monitor-lock")
         if check_host == monitor_host:
             if monitor_state == False:
-                print "Starting monitoring on this host"
+                logger.info("Starting monitoring on this host")
                 monitor_state = True
             return True
         else:
             if monitor_state == True:
-                print "Stopping monitoring on this host"
+                logger.info("Stopping monitoring on this host")
                 monitor_state = False
             return False
 
