@@ -53,7 +53,7 @@ redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
 def check_app():
     app_id = q.get()
-    locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "10")
+    locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "60")
     if not locked:
         return
     logger.debug("checking {}".format(app_id))
@@ -149,7 +149,8 @@ def check_app():
     redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
 
     # allow next check in 10s
-    redis_conn.expire("app#{}:locked".format(app_id), 1)
+    redis_conn.delete("app#{}:locked".format(app_id))
+    #redis_conn.expire("app#{}:locked".format(app_id), 1)
 
 def check_nodes():
     for node in redis_conn.smembers("hosts"):
