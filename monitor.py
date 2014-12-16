@@ -28,7 +28,8 @@ import time
 import threading
 
 import logging
-import socket
+import Queue
+import threading
 
 logger = logging.getLogger("monitor_logger")
 logger.setLevel(logging.INFO)
@@ -45,13 +46,13 @@ logger.addHandler(ch)
 from common.config import Config
 
 config = Config()
-
-monitor_host = socket.gethostbyname(socket.gethostname())
-monitor_state = False
+number_of_threads = 5
+q = Queue.Queue()
 
 redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
-def check_app(app_id):
+def check_app():
+    app_id = q.get()
     locked = redis_conn.execute_command("SET", "app#{}:locked".format(app_id), "locked", "NX", "EX", "10")
     if not locked:
         return
@@ -74,12 +75,14 @@ def check_app(app_id):
 
     if not docker_image:
         #logger.info("{} - image not set, skipping".format(app_id))
-        redis_conn.expire("app#{}:locked".format(app_id), 10)
+        redis_conn.delete("app#{}:locked".format(app_id))
+        #redis_conn.expire("app#{}:locked".format(app_id), 1)
         return
 
     for node in redis_conn.smembers("hosts"):
         c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
         docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
+
         if docker_id:
             try:
                 container_details = c.inspect_container(docker_id)
@@ -113,6 +116,7 @@ def check_app(app_id):
                         except Exception as e:
                             write_event("Problem fetching docker image: {}".format(e))
                             redis_conn.hset("app#{}".format(app_id), "state", "Unable to fetch image {} on {}".format(docker_image, node))
+                            redis_conn.delete("app#{}:locked".format(app_id))
                             return
 
                     c.stop(docker_id)
@@ -138,7 +142,8 @@ def check_app(app_id):
 
             redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
             redis_conn.set("docker_id#{}".format(docker_id), app_id)
-            redis_conn.expire("app#{}:locked".format(app_id), 2)
+            redis_conn.delete("app#{}:locked".format(app_id))
+            #redis_conn.expire("app#{}:locked".format(app_id), 2)
             return
 
     redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
@@ -167,7 +172,8 @@ def monitor_loop():
         app_id = redis_conn.rpoplpush("monitor", "monitor")
         if app_id:
             try:
-                check_app(app_id)
+                #check_app(app_id)
+                q.put(app_id)
             except Exception as e:
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
                 logging.error("{} - {}".format(app_id, e))
@@ -179,6 +185,12 @@ def monitor_loop():
 
 
 if __name__ == '__main__':
+
+    for i in range(number_of_threads):
+        t = threading.Thread(target=check_app)
+        t.daemon = True
+        t.start()
+
 
     monitor_loop()
 
