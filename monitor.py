@@ -54,7 +54,7 @@ redis_conn = redis.StrictRedis(config.redis_host, db=0)
 import random
 
 def check_app():
-    print "Starting app check thread"
+    logger.info("Starting app check thread")
     while True:
         app_id = q.get()
         logger.debug("Check app: {}.{}".format(app_id,random.random()))
@@ -66,6 +66,9 @@ def check_app():
         logger.debug("checking {}".format(app_id))
 
         app_details = redis_conn.hgetall("app#{}".format(app_id))
+        if app_details == None:
+            q.task_done()
+            continue
 
         name = app_details["name"]
         port = app_details["port"]
@@ -87,7 +90,6 @@ def check_app():
             q.task_done()
             continue
 
-
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
             docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
@@ -105,6 +107,14 @@ def check_app():
                     docker_id = None
                     status = redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
                     redis_conn.delete("app#{}:locked".format(app_id))
+                    count = 0
+                    try:
+                        print "Trying to set error_count"
+                        count = app_details.error_count + 1
+                    except:
+                        count = 1
+                    print count
+                    redis_conn.hset("app#{}".format(app_id), "error_count", count)
                 else:
                     current_image = container_details["Config"]["Image"]
                     current_environment = { entry.split("=")[0]: entry.split("=")[1] for entry in container_details["Config"]["Env"] }
@@ -145,7 +155,11 @@ def check_app():
                 if repository == "":
                    repository = docker_image
                 c.pull(repository, tag)
-                r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory)
+                try:
+                    r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory)
+                except:
+                    print "Error creating docker image"
+                    continue
                 docker_id = r["Id"]
                 try:
                     c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
@@ -169,7 +183,7 @@ def check_app():
 
 
 def check_nodes():
-    print "Starting node check thread"
+    logger.info("Starting node check thread")
     while True:
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
@@ -198,8 +212,16 @@ def monitor_loop():
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
                 logging.error("{} - {}".format(app_id, e))
 
-        time.sleep(5)
+        time.sleep(30)
 
+def monitor_changes():
+    #Setting up a pubsub
+    pubsub = redis_conn.pubsub()
+    pubsub.subscribe('app_changes')
+
+    for item in pubsub.listen():
+        logger.info("Processing published updates to {}".format(item['data']))
+        q.put(item['data'])
 
 if __name__ == '__main__':
 
@@ -210,10 +232,13 @@ if __name__ == '__main__':
         t.daemon = True
         t.start()
 
+    pubsub_thread = threading.Thread(target=monitor_changes)
+    pubsub_thread.daemon = True
+    pubsub_thread.start()
 
-#    node_thread = threading.Thread(target=check_nodes)
-#    node_thread.daemon = True
-#    node_thread.start()
+    node_thread = threading.Thread(target=check_nodes)
+    node_thread.daemon = True
+    node_thread.start()
 
     monitor_loop()
 

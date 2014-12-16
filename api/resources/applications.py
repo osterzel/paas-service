@@ -71,7 +71,7 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "port": port, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name })
+                "name": name, "port": port, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name, "error_count": 0 })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
@@ -96,6 +96,8 @@ class Applications(object):
         if not "environment" in data:
             data['environment'] = {}
             data['environment']['RESTART'] = int(1)
+
+        pipe.hset("app#{}".format(name), "error_count", 0)
 
         write_event("UPDATED APP", "App {}, restart called".format(name), name)
 
@@ -126,6 +128,7 @@ class Applications(object):
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
         write_event("UPDATED APP", "App {} was updated".format(name), name)
+        self.publish_updates(name)
 
         return self.get(name)
 
@@ -147,3 +150,7 @@ class Applications(object):
 
         write_event("DELETE APP", "Deleted app - {}".format(name), name)
         return { "message": "Application deleted", "app_port": port}
+
+    def publish_updates(self, app):
+        self.redis_conn.publish('app_changes', app)
+        return True
