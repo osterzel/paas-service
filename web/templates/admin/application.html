@@ -216,7 +216,13 @@
                 <tbody>
 		            {% for environment_entry in app.environment %}
 			            <tr>
-				            <td width="50%">{{ environment_entry}} {% if app.global_environment[environment_entry] == app.environment[environment_entry] %}  <b>(Global)</b>{% endif %}</td>
+				            <td width="50%">{{ environment_entry}}
+									{% if app.global_environment %}
+									{% if app.global_environment[environment_entry] == app.environment[environment_entry] %}
+								       <b>(Global)</b>
+								    {% endif %}
+							        {% endif %}
+							</td>
 				            <td><a href="#" id="{{environment_entry}}" data-type="textarea" data-pk="1">{{ app.environment[environment_entry] }}</a></td>
 			            </tr>
 		            {% endfor %}

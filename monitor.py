@@ -144,7 +144,7 @@ def check_app(app_id):
     redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
 
     # allow next check in 10s
-    redis_conn.expire("app#{}:locked".format(app_id), 5)
+    redis_conn.expire("app#{}:locked".format(app_id), 1)
 
 def check_nodes():
     for node in redis_conn.smembers("hosts"):
