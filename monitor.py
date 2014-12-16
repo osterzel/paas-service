@@ -164,43 +164,18 @@ def check_nodes():
 
 def monitor_loop():
     while True:
-        check_lock = check_monitor_lock()
-        if check_lock:
-            app_id = redis_conn.rpoplpush("monitor", "monitor")
-            if app_id:
-                try:
-                    check_app(app_id)
-                except Exception as e:
-                    redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
-                    logging.error("{} - {}".format(app_id, e))
+        app_id = redis_conn.rpoplpush("monitor", "monitor")
+        if app_id:
             try:
-                check_nodes()
+                check_app(app_id)
             except Exception as e:
-                logging.error("{}".format(e))
-            time.sleep(0.10)
-        else:
-            time.sleep(10)
-
-
-def check_monitor_lock():
-    global monitor_state
-    #First try to write a lock record if none exists
-    lock_record = redis_conn.execute_command("SET", "monitor-lock", monitor_host, "NX", "EX", "10")
-    if lock_record:
-        return True
-    else:
-        check_host = redis_conn.get("monitor-lock")
-        if check_host == monitor_host:
-            if monitor_state == False:
-                logger.info("Starting monitoring on this host")
-                monitor_state = True
-            return True
-        else:
-            if monitor_state == True:
-                logger.info("Stopping monitoring on this host")
-                monitor_state = False
-            return False
-
+                redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
+                logging.error("{} - {}".format(app_id, e))
+        try:
+            check_nodes()
+        except Exception as e:
+            logging.error("{}".format(e))
+        time.sleep(0.10)
 
 
 if __name__ == '__main__':
