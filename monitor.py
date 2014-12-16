@@ -66,9 +66,6 @@ def check_app():
         logger.debug("checking {}".format(app_id))
 
         app_details = redis_conn.hgetall("app#{}".format(app_id))
-        if app_details == None:
-            q.task_done()
-            continue
 
         name = app_details["name"]
         port = app_details["port"]
@@ -206,7 +203,6 @@ def monitor_loop():
         app_id = redis_conn.rpoplpush("monitor", "monitor")
         if app_id:
             try:
-                #check_app(app_id)
                 q.put(app_id)
             except Exception as e:
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
@@ -215,13 +211,15 @@ def monitor_loop():
         time.sleep(30)
 
 def monitor_changes():
-    #Setting up a pubsub
+    #Setting up a pubsub for event handling
     pubsub = redis_conn.pubsub()
     pubsub.subscribe('app_changes')
 
     for item in pubsub.listen():
         logger.info("Processing published updates to {}".format(item))
-        q.put(item['data'])
+        app_details = redis_conn.hgetall("app#{}".format(item['data']))
+        if "name" in app_details:
+            q.put(item['data'])
 
 if __name__ == '__main__':
 
