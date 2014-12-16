@@ -220,7 +220,7 @@ def monitor_changes():
     pubsub.subscribe('app_changes')
 
     for item in pubsub.listen():
-        logger.info("Processing published updates to {}".format(item['data']))
+        logger.info("Processing published updates to {}".format(item))
         q.put(item['data'])
 
 if __name__ == '__main__':

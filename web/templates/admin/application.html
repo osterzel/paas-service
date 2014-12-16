@@ -16,7 +16,7 @@
 	          });    	
 
   		  $('#docker_image').editable({
-			url: '/api/app/{{ app.name }}',
+			url: '/app/{{ app.name }}',
 	       		params: function(params) {
 				send_data = {};
 				key = params['name'];
@@ -28,7 +28,7 @@
 		  });
 
   		  $('#command').editable({
-			url: '/api/app/{{ app.name }}',
+			url: '/app/{{ app.name }}',
 	       		params: function(params) {
 				send_data = {};
 				key = params['name'];
@@ -40,7 +40,7 @@
 		  });
 
   		  $('#memory_in_mb').editable({
-			url: '/api/app/{{ app.name }}',
+			url: '/app/{{ app.name }}',
 	       		params: function(params) {
 				send_data = {};
 				key = params['name'];
@@ -52,7 +52,7 @@
 		  });
 
  		  $('#urls').editable({
-			url: '/api/app/{{ app.name }}',
+			url: '/app/{{ app.name }}',
 	       		params: function(params) {
 				send_data = {};
 				key = params['name'];
@@ -65,7 +65,7 @@
 
                 {% for environment_entry in app.environment %}
                   $('#{{environment_entry}}').editable({
-                        url: '/api/app/{{ app.name }}',
+                        url: '/app/{{ app.name }}',
                         params: function(params) {
                                 send_data = {};
                                 send_data['environment'] = {};
@@ -82,7 +82,7 @@
 		  $('#environmentoptions .editable').editable('toggleDisabled');
 
 	       $('.newvariable').editable({
-			url: '/api/app/{{ app.name }}',
+			url: '/app/{{ app.name }}',
 			     validate: {
          			key: function(v) {if(v == '') return 'Required field!'}
       		 	      }, 
@@ -105,7 +105,7 @@
 	        console.log(JSON.stringify(send_data));
             $.ajax({
                 type: 'PATCH',
-                url: '/api/app/{{ app.name }}',
+                url: '/app/{{ app.name }}',
 	            contentType: "application/json; charset=utf-8",
                 data: JSON.stringify(send_data),
                 dataType: 'json'
@@ -126,7 +126,7 @@
     function sendRestart () {
          $.ajax({
              type: 'PATCH',
-             url: '/api/app/{{ app.name }}',
+             url: '/app/{{ app.name }}',
              contentType:"application/json; charset=utf-8",
              dataType:"json",
              data:  '{ "restart": true }',
