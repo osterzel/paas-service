@@ -79,8 +79,6 @@ def check_app(app_id):
         return
 
     for node in redis_conn.smembers("hosts"):
-	    logging.info("Checking containers on host {}".format(node))
-        
         c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
         docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
         if docker_id:
