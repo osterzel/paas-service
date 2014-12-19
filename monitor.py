@@ -106,11 +106,11 @@ def check_app():
                     redis_conn.delete("app#{}:locked".format(app_id))
                     count = 0
                     try:
-                        print "Trying to set error_count"
+                        logger.info("Trying to set error_count")
                         count = app_details.error_count + 1
                     except:
                         count = 1
-                    print count
+                    logger.info(count)
                     redis_conn.hset("app#{}".format(app_id), "error_count", count)
                 else:
                     current_image = container_details["Config"]["Image"]
@@ -138,8 +138,11 @@ def check_app():
                                 q.task_done()
                                 continue
 
-                        c.stop(docker_id)
-                        c.remove_container(docker_id)
+                        try:
+                            c.stop(docker_id)
+                            c.remove_container(docker_id)
+                        except Exception as e:
+                            logger.error("Unable to remove container, error: {}".format(e.message))
                         write_event("CONTAINER_MONITOR", "Docker container {} destroyed on node {} for app_id {}".format(docker_id, node, app_id))
                         docker_id = redis_conn.hdel("{}:{}".format(node, app_id), "docker_id")
                         status = redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
@@ -155,13 +158,13 @@ def check_app():
                 try:
                     r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory)
                 except:
-                    print "Error creating docker image"
+                    logger.error("Error creating docker image")
                     continue
                 docker_id = r["Id"]
                 try:
                     c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
                 except:
-                    print "Error talking to docker"
+                    logger.error("Error talking to docker")
 
 
                 write_event("CONTAINER_MONITOR", "Starting docker container {} on node {} for app_id {}".format(docker_id, node, app_id))
@@ -189,10 +192,14 @@ def check_nodes():
                 container_details = c.inspect_container(docker_id)
                 app_id = redis_conn.get("docker_id#{}".format(docker_id))
                 if (docker_id != redis_conn.hget("{}:{}".format(node, app_id), "docker_id") or not redis_conn.exists("app#{}".format(app_id))):
-                    print "stopping orphaned container {}".format(docker_id)
+                    logger.info("stopping orphaned container {}".format(docker_id))
                     write_event("CONTAINER_MONITOR", "Destroying orphaned docker container {} on node {}".format(docker_id, node))
-                    c.stop(docker_id)
-                    c.remove_container(docker_id)
+                    try:
+                        c.stop(docker_id)
+                        c.remove_container(docker_id)
+                    except Exception as e:
+                        logger.error("Unable to remove container, error: {}".format(e.message))
+
                     redis_conn.delete("docker_id#{}".format(docker_id))
                     redis_conn.delete("{}:{}".format(node, app_id))
         time.sleep(10)
@@ -202,7 +209,6 @@ def monitor_loop():
     first_app = None
     while True:
         app_id = redis_conn.rpoplpush("monitor", "monitor")
-        print app_id
         if first_app == None:
             first_app = app_id
         if app_id:
