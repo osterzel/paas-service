@@ -8,6 +8,7 @@ import sys
 sys.path.append(dirname(realpath(__file__)) + '../' )
 
 from common.paasevents import write_event, get_events
+from api.resources.applications import Applications
 
 #stupid docker-py, monkeypatch
 def pull_fix(self, repository, tag=None, registry=None):
@@ -48,6 +49,8 @@ from common.config import Config
 config = Config()
 number_of_threads = 5
 q = Queue.Queue()
+
+application = Applications(config)
 
 redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
@@ -96,7 +99,7 @@ def check_app():
                     container_details = c.inspect_container(docker_id)
                     container_logs = c.logs(docker_id)
                     # redis.setex("docker_id#{}:logs".format(docker_id), container_logs)
-                    redis_conn.hset("app#{}:logs".format(app_id), node, container_logs)
+                    application.set_application_logs(app_id, node, container_logs)
                 except HTTPError:
                     container_details = { "State": { "Running": False } }
 
@@ -156,7 +159,7 @@ def check_app():
                    repository = docker_image
                 c.pull(repository, tag)
                 try:
-                    r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory)
+                    r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory, name=app_id)
                 except:
                     logger.error("Error creating docker image")
                     continue

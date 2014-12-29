@@ -9,6 +9,7 @@ from datetime import datetime
 import redis
 
 from common.paasevents import write_event, get_events
+import common.exceptions as exceptions
 
 class Applications(object):
 
@@ -62,7 +63,7 @@ class Applications(object):
 
         grabbed_name = self.redis_conn.hsetnx("app#{}".format(name), "created_at", datetime.now().isoformat())
         if not grabbed_name:
-            raise Exception
+            raise exceptions.ApplicationExists
         port = self.redis_conn.spop("ports")
         if not port:
             self.redis_conn.delete("app#{}".format(name))
@@ -154,3 +155,11 @@ class Applications(object):
     def publish_updates(self, app):
         self.redis_conn.publish('app_changes', app)
         return True
+
+    def set_application_logs(self, name, node, container_logs):
+        self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
+
+    def get_application_logs(self, name):
+        raw_logs = self.redis_conn.hgetall("app#{}:logs".format(name))
+        return []
+

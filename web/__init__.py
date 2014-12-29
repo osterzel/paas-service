@@ -52,8 +52,8 @@ def application_admin(app_name):
     events.reverse()
 
     hosts = g.redis_conn.smembers("hosts")
+    raw_app_logs = g.application.get_application_logs(app_name)
 
-    raw_app_logs = g.redis_conn.hgetall("app#{}:logs".format(app_name))
     for host in raw_app_logs:
         raw_app_logs[host] = raw_app_logs[host].split("\n")
 

@@ -39,10 +39,11 @@ class ApplicationCollection(restful.Resource):
             restful.abort(400)
 
         application_request = request.json
+        print application_request
         try:
             application_response = g.applications.create_application(application_request)
         except Exception as e:
-            restful.abort(503, message = e)
+            restful.abort(500, message = e.message)
 
         return application_response, 201
 
@@ -62,11 +63,12 @@ class ApplicationRecord(restful.Resource):
         try:
             application_response = g.applications.update_application(name, application_request)
         except Exception as e:
-            restful.abort(400, message = e)
+            restful.abort(400, message = e.message)
 
         return application_response, 201
 
     def delete(self, name):
+
         return g.applications.delete_application(name)
 
 
