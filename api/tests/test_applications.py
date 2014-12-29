@@ -28,7 +28,7 @@ class TestApplication(unittest.TestCase):
             "urls": "testapplication.localdomain.com",
             "memory_in_mb": 128,
             "command": "test command",
-            "docker_image": "test dockerimage",
+            "docker_image": "test/dockerimage",
             "type": "daemon"
         }
 

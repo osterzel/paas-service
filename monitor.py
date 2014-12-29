@@ -192,7 +192,11 @@ def check_nodes():
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
             for container in c.containers(all=True):
                 docker_id = container["Id"]
-                container_details = c.inspect_container(docker_id)
+                try:
+                    container_details = c.inspect_container(docker_id)
+                except Exception as e:
+                    logger.info("Error getting container details")
+                    continue
                 app_id = redis_conn.get("docker_id#{}".format(docker_id))
                 if (docker_id != redis_conn.hget("{}:{}".format(node, app_id), "docker_id") or not redis_conn.exists("app#{}".format(app_id))):
                     logger.info("stopping orphaned container {}".format(docker_id))
@@ -209,11 +213,15 @@ def check_nodes():
 
 
 def monitor_loop():
-    first_app = None
+    count = 0
+    list_size = 0
     while True:
+
+        if count == 0:
+            list_size = redis_conn.llen("monitor")
+            logger.info("Started check of {} apps".format(list_size))
+
         app_id = redis_conn.rpoplpush("monitor", "monitor")
-        if first_app == None:
-            first_app = app_id
         if app_id:
             try:
                 q.put(app_id)
@@ -221,8 +229,13 @@ def monitor_loop():
                 redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
                 logging.error("{} - {}".format(app_id, e))
 
-        if app_id == first_app:
+        count += 1
+
+        if count >= list_size:
+            count = 0
             time.sleep(10)
+
+
 
 def monitor_changes():
     #Setting up a pubsub for event handling
