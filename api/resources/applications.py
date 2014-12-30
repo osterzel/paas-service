@@ -40,11 +40,14 @@ class Applications(object):
         #Fetch all containers that match this application
         keys = self.redis_conn.keys("*:{}".format(name))
         containers = []
-        #for key in keys:
-        #    data = self.redis_conn.hgetall(key)
-        #    (node, app_name) = key.split(":")
-        #    print data
-        #    containers.append("{}:{}".format(node, data['port']))
+        for key in keys:
+            data = self.redis_conn.hgetall(key)
+            (node, app_name) = key.split(":")
+            print data
+            if "port" in data:
+                containers.append("{}:{}".format(node, data['port']))
+            else:
+                containers.append(key)
 
         app_details['containers'] = containers
 

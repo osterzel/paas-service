@@ -131,6 +131,8 @@ def process_change():
                 logger.error("Error creating docker image")
                 continue
 
+
+            application.set_application_state(app, "DEPLOYING to {}".format(node))
             docker_id = r['Id']
             to_add.append(docker_id)
             c.start(docker_id)
@@ -145,7 +147,7 @@ def process_change():
             print output['State']['Running']
             successful = 0
             if output['State']['Running'] == False:
-                logs = c.logs(docker_id)
+                logs = c.logs(docker_id, port_bindings={"{}/tcp".format(port): port})
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
@@ -205,7 +207,7 @@ def check_app():
         logger.debug("{}:No fatal error count found".format(unique_app_id))
 
         name = app_details["name"]
-        port = app_details["port"]
+        #port = app_details["port"]
         docker_image = app_details["docker_image"]
         state = app_details["state"]
         environment = {}
@@ -255,6 +257,7 @@ def check_app():
                     if not paas_init_lock:
                         raise Exception
                     redis_conn.sadd("ports:{}".format(node), *range(49152, 65535))
+                port = redis_conn.spop("ports:{}".format(node))
 
                 redis_conn.hset("app#{}".format(app_id), "state", "DEPLOYING to {}".format(node))
                 logger.info("{} - starting runner on {}".format(app_id, node))
@@ -263,8 +266,9 @@ def check_app():
                    repository = docker_image
                 c.pull(repository, tag)
                 try:
-                    r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory)
-                except:
+                    r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory, name="{}_{}".format(app_id, port))
+                except Exception as e:
+                    application.set_application_state(app_id, "Exception: {}".format(e.message))
                     logger.error("Error creating docker image")
                     continue
                 docker_id = r["Id"]
@@ -278,6 +282,7 @@ def check_app():
 
 
                 redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
+                redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                 redis_conn.set("docker_id#{}".format(docker_id), app_id)
 
         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
