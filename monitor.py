@@ -68,26 +68,43 @@ import random
 
 def get_cluster_state():
     cluster_state = {}
+    cluster_state['containers'] = []
+    cluster_state['nodes'] = {}
     for node in redis_conn.smembers("hosts"):
-        cluster_state[node] = {}
-        c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
-        for container in c.containers(all=True):
-            docker_id = container["Id"]
-            try:
-                container_details = c.inspect_container(docker_id)
-                cluster_state[node][docker_id] = container_details
-            except Exception as e:
-                logger.info("Error getting container details")
+        cluster_state['nodes'][node] = {}
+        try:
+            c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
+            for container in c.containers(all=True):
+                docker_id = container["Id"]
+                cluster_state['containers'].append(docker_id)
+                try:
+                    container_details = c.inspect_container(docker_id)
+                    cluster_state['nodes'][node][docker_id] = container_details
+                except Exception as e:
+                    logger.info("Error getting container details: {}".format(e.message))
+
+        except:
+            logger.error("Unable to connect to node {} to fetch cluster state".format(node))
 
     return cluster_state
+
+def get_app_state():
+    docker_keys = redis_conn.keys("docker_id#*")
+    app_state = {}
+    app_state['containers'] = []
+    for docker_key in docker_keys:
+        app_state['containers'].append(docker_key.split('#')[1])
+
+    return app_state
+
+
 
 def process_change():
     logger.info("Starting app change thread")
     while True:
         app = change_queue.get()
-        print app
+        logger.info("Processing update on app {}".format(app))
         locked = application.set_application_lock(app)
-        print locked
         if not locked:
             continue
 
@@ -104,9 +121,6 @@ def process_change():
             command = app_details['command'].split()
         except:
             command = None
-
-        to_add = []
-        to_remove = []
 
         logger.info("Ready to go through nodes and create new instances")
 
@@ -134,10 +148,9 @@ def process_change():
 
             application.set_application_state(app, "DEPLOYING to {}".format(node))
             docker_id = r['Id']
-            to_add.append(docker_id)
-            c.start(docker_id)
+            c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
             redis_conn.set("docker_id#{}".format(docker_id), app)
-            redis_conn.execute_command("SET", "docker_id#{}:locked".format(docker_id), "locked", "NX", "EX", 20)
+            redis_conn.execute_command("SET", "docker_id:locked#{}".format(docker_id), "locked", "NX", "EX", 20)
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
@@ -147,12 +160,12 @@ def process_change():
             print output['State']['Running']
             successful = 0
             if output['State']['Running'] == False:
-                logs = c.logs(docker_id, port_bindings={"{}/tcp".format(port): port})
+                logs = c.logs(docker_id)
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
                 for key in current_containers:
-                    print key
+
                     data = redis_conn.hgetall(key)
                     delete_docker_id = data['docker_id']
                     print delete_docker_id
@@ -160,8 +173,12 @@ def process_change():
                         delete_port = data['port']
                         redis_conn.sadd("ports:{}".format(node), delete_port)
 
-                    c.stop(delete_docker_id)
-                    c.remove_container(delete_docker_id)
+                    try:
+                        c.stop(delete_docker_id)
+                        c.remove_container(delete_docker_id)
+                    except Exception as e:
+                        application.set_application_state(app, "Exception: {}".format(e.message))
+
                     redis_conn.delete(key)
                     redis_conn.delete("docker_id#{}".format(delete_docker_id))
                     logger.info("Deleted old container {}".format(delete_docker_id))
@@ -172,7 +189,7 @@ def process_change():
                 logger.info("Finished updateding node {}".format(node))
                 redis_conn.hset("app#{}".format(app), "state", "RUNNING")
 
-            redis_conn.delete("docker_id#{}:locked".format(docker_id))
+            redis_conn.delete("docker_id:locked#{}".format(docker_id))
 
         change_queue.task_done()
         application.remove_application_lock(app)
@@ -207,11 +224,9 @@ def check_app():
         logger.debug("{}:No fatal error count found".format(unique_app_id))
 
         name = app_details["name"]
-        #port = app_details["port"]
         docker_image = app_details["docker_image"]
         state = app_details["state"]
-        environment = {}
-        environment.update(redis_conn.hgetall("{}:environment".format(app_id)))
+        environment = app_details['environment']
 
         memory = int(app_details["memory_in_mb"]) * 1024**2
         try:
@@ -233,17 +248,18 @@ def check_app():
 
             if docker_id:
                 try:
-                    container_details = cluster_state[node][docker_id]
-                    #container_details = c.inspect_container(docker_id)
+                    #container_details = cluster_state[node][docker_id]
+                    container_details = c.inspect_container(docker_id)
                     container_logs = c.logs(docker_id)
                     # redis.setex("docker_id#{}:logs".format(docker_id), container_logs)
                     application.set_application_logs(app_id, node, container_logs)
                 except (HTTPError, KeyError):
+                    logger.info("Error fetching container details")
                     container_details = { "State": { "Running": False } }
 
                 if not container_details["State"]["Running"]:
                     docker_id = None
-                    status = redis_conn.delete("docker_id#{}".format(docker_id), "{}:{}".format(node, app_id))
+                    status = redis_conn.delete("docker_id#{}".format(docker_id))
                     redis_conn.delete("app#{}:locked".format(app_id))
                     count = 0
                     count = application.set_application_error_count(app_id)
@@ -265,27 +281,39 @@ def check_app():
                 if repository == "":
                    repository = docker_image
                 c.pull(repository, tag)
+
                 try:
                     r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory, name="{}_{}".format(app_id, port))
                 except Exception as e:
                     application.set_application_state(app_id, "Exception: {}".format(e.message))
                     logger.error("Error creating docker image")
                     continue
+
                 docker_id = r["Id"]
                 try:
+                    redis_conn.set("docker_id#{}".format(docker_id), app_id)
+                    redis_conn.execute_command("SET", "docker_id:locked#{}".format(docker_id), "locked", "NX", "EX", 60)
                     c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
                     write_event("CONTAINER_MONITOR", "Starting docker container {} on node {} for app_id {}".format(docker_id, node, app_id))
+
+                    #Now wait until the inspect returns and says its running then we say its successful
+                    time.sleep(7)
+                    output = c.inspect_container(docker_id)
+                    if output['State']['Running'] == False:
+                        logs = c.logs(docker_id)
+                        redis_conn.hset("app#{}".format(app_id), "state", "Error updating application, {}".format(logs))
+                        logger.info("Problem starting up new container\n Log info: {}".format(logs))
+                    else:
+                        redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
+                        redis_conn.hset("{}:{}".format(node, app_id), "port", port)
+                        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+
+
                 except:
                     logger.error("Error talking to docker node {}".format(node))
                     write_event("CONTAINER_MONITOR", "Failed talking to node {} to start {}".format(node, app_id))
                     redis_conn.hset("app#{}".format(app_id), "state", "Problem talking to node {}".format(node))
 
-
-                redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
-                redis_conn.hset("{}:{}".format(node, app_id), "port", port)
-                redis_conn.set("docker_id#{}".format(docker_id), app_id)
-
-        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
 
         # allow next check in 10s
         redis_conn.delete("app#{}:locked".format(app_id))
@@ -295,8 +323,6 @@ def check_app():
 def check_nodes():
     logger.info("Starting node check thread")
     while True:
-        cluster_state = get_cluster_state()
-
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
             for container in c.containers(all=True):
@@ -307,11 +333,15 @@ def check_nodes():
                     logger.info("Error getting container details")
                     continue
                 app_id = redis_conn.get("docker_id#{}".format(docker_id))
-                data = redis_conn.keys("docker_id#{}:locked".format(docker_id))
+                data = redis_conn.keys("docker_id:locked#{}".format(docker_id))
                 if data:
                     continue
-                redis_conn.delete("docker_id#{}:locked".format(docker_id))
+                redis_conn.delete("docker_id:locked#{}".format(docker_id))
                 if (docker_id != redis_conn.hget("{}:{}".format(node, app_id), "docker_id") or not redis_conn.exists("app#{}".format(app_id))):
+                    print app_id
+                    print docker_id
+                    print redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
+                    print redis_conn.exists("app#{}".format(app_id))
                     logger.info("stopping orphaned container {}".format(docker_id))
                     write_event("CONTAINER_MONITOR", "Destroying orphaned docker container {} on node {}".format(docker_id, node))
                     try:
@@ -330,28 +360,36 @@ def monitor_loop():
     while True:
 
         apps = redis_conn.lrange("monitor", 0 , -1 )
+        #apps = ["aslive-trend-subscriber"]
         cluster_state = get_cluster_state()
-            #app_id = redis_conn.rpoplpush("monitor", "monitor")
+
+        app_state = get_app_state()
+
+        missing_in_controller = list(set(app_state['containers']) - set(cluster_state['containers']))
+        for i in missing_in_controller:
+            redis_conn.delete("docker_id#{}".format(i))
+
+        #Check the app node records
+        for node in redis_conn.smembers("hosts"):
+            keys = redis_conn.keys("{}:*".format(node))
+            for key in keys:
+                docker_id = redis_conn.hget(key, "docker_id")
+                if not redis_conn.exists("docker_id#{}".format(docker_id)):
+                    redis_conn.delete(key)
+
+        missing_in_nodes = list(set(cluster_state['containers']) - set(app_state['containers']))
+
+        for node in cluster_state['nodes']:
+            print node
+
+
+        #print missing_in_nodes
+
+        #app_id = redis_conn.rpoplpush("monitor", "monitor")
         for app in apps:
             q.put({ "app": app, "cluster": cluster_state })
 
         time.sleep(30)
-#            if app_id:
-#                try:
-#                    data = {}
-#                    data['cluster'] = cluster_state
-#                    data['app'] = app_id####
-#
-#                    q.put(data)
-#                except Exception as e:
-#                    redis_conn.hset("app#{}".format(app_id), "state", "FAILED - {}".format(e))
-#                    logger.error("{} - {}".format(app_id, e))
-#        else:
-#            apps = redis_conn.lrange("monitor",0, -1)
-#            list_size = redis_conn.llen("monitor")
-#            cluster_state = get_cluster_state()
-#            time.sleep(10)
-
 
 
 
@@ -381,9 +419,9 @@ if __name__ == '__main__':
     pubsub_thread.daemon = True
     pubsub_thread.start()
 
-    node_thread = threading.Thread(target=check_nodes)
-    node_thread.daemon = True
-    node_thread.start()
+    #node_thread = threading.Thread(target=check_nodes)
+    #node_thread.daemon = True
+    #node_thread.start()
 
     change_thread = threading.Thread(target=process_change)
     change_thread.daemon = True

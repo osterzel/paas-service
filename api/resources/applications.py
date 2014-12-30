@@ -43,7 +43,6 @@ class Applications(object):
         for key in keys:
             data = self.redis_conn.hgetall(key)
             (node, app_name) = key.split(":")
-            print data
             if "port" in data:
                 containers.append("{}:{}".format(node, data['port']))
             else:
