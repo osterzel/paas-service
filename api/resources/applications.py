@@ -172,7 +172,6 @@ class Applications(object):
         self.redis_conn.hset("app#{}".format(name), "state", message)
 
     def set_application_logs(self, name, node, container_logs):
-        print "Setting the logs"
         self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
 
     def get_application_logs(self, name):
