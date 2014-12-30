@@ -97,8 +97,6 @@ def get_app_state():
 
     return app_state
 
-
-
 def process_change():
     logger.info("Starting app change thread")
     while True:
@@ -157,7 +155,6 @@ def process_change():
             time.sleep(7)
             output = c.inspect_container(docker_id)
 
-            print output['State']['Running']
             successful = 0
             if output['State']['Running'] == False:
                 logs = c.logs(docker_id)
@@ -168,7 +165,6 @@ def process_change():
 
                     data = redis_conn.hgetall(key)
                     delete_docker_id = data['docker_id']
-                    print delete_docker_id
                     if "port" in data:
                         delete_port = data['port']
                         redis_conn.sadd("ports:{}".format(node), delete_port)
@@ -355,6 +351,14 @@ def check_nodes():
         time.sleep(10)
 
 
+def delete_node(docker_ids, cluster_state):
+    for node in cluster_state['nodes']:
+        c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
+        for docker_id in docker_ids:
+            if docker_id in cluster_state['nodes'][node]:
+                c.remove_container(docker_id)
+
+
 def monitor_loop():
     list_size = 0
     while True:
@@ -382,8 +386,7 @@ def monitor_loop():
         for node in cluster_state['nodes']:
             print node
 
-
-        #print missing_in_nodes
+        delete_node(missing_in_nodes, cluster_state)
 
         #app_id = redis_conn.rpoplpush("monitor", "monitor")
         for app in apps:
