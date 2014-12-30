@@ -383,9 +383,6 @@ def monitor_loop():
 
         missing_in_nodes = list(set(cluster_state['containers']) - set(app_state['containers']))
 
-        for node in cluster_state['nodes']:
-            print node
-
         delete_node(missing_in_nodes, cluster_state)
 
         #app_id = redis_conn.rpoplpush("monitor", "monitor")
