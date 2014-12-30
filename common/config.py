@@ -6,6 +6,7 @@ import redis
 class Config(object):
     def __init__(self):
         self.redis_host = os.getenv("REDIS_HOST", "localhost")
+        self.log_level = os.getenv("LOG_LEVEL", "INFO")
 
         ## Assumed 16GB RAM, 128MB per container with 2-3GB reserved for OS
         self.slots_per_node = int(os.getenv("SLOTS_PER_NODE", "110"))

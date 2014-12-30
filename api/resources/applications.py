@@ -37,8 +37,18 @@ class Applications(object):
         if not app_details:
             raise Exception
 
+        #Fetch all containers that match this application
+        keys = self.redis_conn.keys("*:{}".format(name))
+        containers = []
+        #for key in keys:
+        #    data = self.redis_conn.hgetall(key)
+        #    (node, app_name) = key.split(":")
+        #    print data
+        #    containers.append("{}:{}".format(node, data['port']))
+
+        app_details['containers'] = containers
+
         if not "urls" in app_details:
-            print "No urls found"
             try:
                 main_url = app_details['name'] + app_details['global_environment']['domain_name']
             except:
@@ -47,17 +57,19 @@ class Applications(object):
 
             app_details['urls'] = main_url
 
-        app_details['hosts'] = list(self.redis_conn.smembers("hosts"))
+        #app_details['port'] = list(self.redis_conn.smembers("hosts"))
 
         return app_details
 
     def create_application(self, data):
 
-        if not self.redis_conn.exists("ports"):
-            paas_init_lock = self.redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
-            if not paas_init_lock:
-                raise Exception
-            self.redis_conn.sadd("ports", *range(49152, 65535))
+        #Don't allocate port her but rather when we come to create a container we allocate a port to that
+
+        #if not self.redis_conn.exists("ports"):
+        #    paas_init_lock = self.redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
+        #    if not paas_init_lock:
+        #        raise Exception
+        #    self.redis_conn.sadd("ports", *range(49152, 65535))
 
         name = data['name']
 
@@ -126,13 +138,13 @@ class Applications(object):
             to_remove = [k for k,v in data["environment"].items() if not v ]
             if to_remove:
                 pipe.hdel("{}:environment".format(name), *to_remove)
+        pipe.hdel("app#{}".format(name), "error_count")
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
         write_event("UPDATED APP", "App {} was updated".format(name), name)
         self.publish_updates(name)
 
         return self.get(name)
-
 
     def delete_application(self, name):
         if not self.redis_conn.exists("app#{}".format(name)):
@@ -156,10 +168,34 @@ class Applications(object):
         self.redis_conn.publish('app_changes', app)
         return True
 
+    def set_application_state(self, name, message):
+        self.redis_conn.hset("app#{}".format(name), "state", message)
+
     def set_application_logs(self, name, node, container_logs):
+        print "Setting the logs"
         self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
 
     def get_application_logs(self, name):
         raw_logs = self.redis_conn.hgetall("app#{}:logs".format(name))
         return []
 
+    def set_application_error_count(self, name):
+        error_count = self.get_application_error_count(name)
+        try:
+            count = error_count + 1
+        except:
+            count = 1
+
+        self.redis_conn.hset("app#{}".format(name), "error_count", count)
+        return count
+
+    def get_application_error_count(self, name):
+        error_count = self.redis_conn.hget("app#{}".format(name), "error_count")
+
+        return error_count
+
+    def set_application_lock(self,name):
+        return self.redis_conn.execute_command("SET", "app#{}:locked".format(name), "locked", "NX", "EX", "60")
+
+    def remove_application_lock(self, name):
+        return self.redis_conn.delete("app#{}:locked".format(name))

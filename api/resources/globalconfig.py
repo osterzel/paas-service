@@ -5,11 +5,6 @@ import sys
 
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
-from datetime import datetime
-
-import common.paasevents
-import json
-
 import redis
 
 class GlobalConfig(object):
