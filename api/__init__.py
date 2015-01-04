@@ -99,7 +99,6 @@ class ApplicationUrls(restful.Resource):
                         if not "url" in application_details['endpoints']:
                             application_details['endpoints'][url] = {}
                         application_details['endpoints'][url]['/'] = app_details['name']
-                    print application_details
 
                 application_details['containers'][app] = app_details['containers']
             except Exception as e:
