@@ -5,6 +5,7 @@ import hashlib
 from flask import g, Blueprint, request
 from flask.ext import restful
 import redis
+import re
 
 from .resources.applications import *
 from .resources.globalconfig import *
@@ -72,8 +73,46 @@ class ApplicationRecord(restful.Resource):
         return g.applications.delete_application(name)
 
 
+class ApplicationUrls(restful.Resource):
+
+    def get(self):
+        #Return all the applications and url endpoints associated with them
+
+        #This should include both subdomain and combined path based urls
+
+        ab = re.compile("^.*:.*$")
+        application_details = {}
+        application_details['containers'] = {}
+        application_details['endpoints'] = {}
+
+        apps = g.redis_conn.smembers("apps")
+        for app in apps:
+            try:
+                app_details = g.applications.get(app)
+                for url in app_details['urls'].split('\n'):
+                    if ab.match(url):
+                        (domain, location) = url.split(":")
+                        if not domain in application_details['endpoints']:
+                            application_details['endpoints'][domain] = {}
+                        application_details['endpoints'][domain][location] = app_details['name']
+                    else:
+                        if not "url" in application_details['endpoints']:
+                            application_details['endpoints'][url] = {}
+                        application_details['endpoints'][url]['/'] = app_details['name']
+                    print application_details
+
+                application_details['containers'][app] = app_details['containers']
+            except Exception as e:
+                print "Error fetching application details for urls"
+
+        return application_details, 201
+
+
+
+
 paas_api.add_resource(ApplicationCollection, '/app', '/app/')
 paas_api.add_resource(ApplicationRecord, '/app/<string:name>')
+paas_api.add_resource(ApplicationUrls, '/app/urls', '/app/urls/')
 
 class GlobalCollection(restful.Resource):
     def get(self):
