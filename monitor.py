@@ -243,7 +243,11 @@ def check_app():
                 try:
                     #container_details = cluster_state[node][docker_id]
                     container_details = c.inspect_container(docker_id)
-                    container_logs = c.logs(docker_id)
+		    try:
+                    	container_logs = c.logs(docker_id)
+		    except:
+			logger.error("Unable to fetch logs for {}".format(docker_id))
+		   
                     # redis.setex("docker_id#{}:logs".format(docker_id), container_logs)
                     application.set_application_logs(app_id, node, container_logs)
                 except (HTTPError, KeyError):
@@ -353,6 +357,7 @@ def delete_node(docker_ids, cluster_state):
         c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
         for docker_id in docker_ids:
             if docker_id in cluster_state['nodes'][node]:
+		c.stop(docker_id)
                 c.remove_container(docker_id)
 
 
