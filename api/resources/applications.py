@@ -78,15 +78,11 @@ class Applications(object):
         grabbed_name = self.redis_conn.hsetnx("app#{}".format(name), "created_at", datetime.now().isoformat())
         if not grabbed_name:
             raise exceptions.ApplicationExists
-        port = self.redis_conn.spop("ports")
-        if not port:
-            self.redis_conn.delete("app#{}".format(name))
-            raise Exception
 
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "port": port, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name, "error_count": 0 })
+                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name, "error_count": 0 })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()

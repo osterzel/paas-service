@@ -128,9 +128,6 @@ def process_change():
 
             #Get a free port for the node and allocate it to this container
             if not redis_conn.exists("ports:{}".format(node)):
-                paas_init_lock = redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
-                if not paas_init_lock:
-                    raise Exception
                 redis_conn.sadd("ports:{}".format(node), *range(49152, 65535))
 
             port = redis_conn.spop("ports:{}".format(node))
