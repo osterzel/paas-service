@@ -7,6 +7,7 @@ sys.path.append(dirname(realpath(__file__)) + '../../' )
 
 from datetime import datetime
 import redis
+import re
 
 from common.paasevents import write_event, get_events
 import common.exceptions as exceptions
@@ -174,7 +175,7 @@ class Applications(object):
 
     def get_application_logs(self, name):
         raw_logs = self.redis_conn.hgetall("app#{}:logs".format(name))
-        return []
+        return raw_logs
 
     def set_application_error_count(self, name):
         error_count = self.get_application_error_count(name)
@@ -196,3 +197,30 @@ class Applications(object):
 
     def remove_application_lock(self, name):
         return self.redis_conn.delete("app#{}:locked".format(name))
+
+    def get_all_urls(self):
+        ab = re.compile("^.*:.*$")
+        application_details = {}
+        application_details['containers'] = {}
+        application_details['endpoints'] = {}
+
+        apps = self.redis_conn.smembers("apps")
+        for app in apps:
+            try:
+                app_details = self.get(app)
+                for url in app_details['urls'].split('\n'):
+                    if ab.match(url):
+                        (domain, location) = url.split(":")
+                        if not domain in application_details['endpoints']:
+                            application_details['endpoints'][domain] = {}
+                        application_details['endpoints'][domain][location] = app_details['name']
+                    else:
+                        if not "url" in application_details['endpoints']:
+                            application_details['endpoints'][url] = {}
+                        application_details['endpoints'][url]['/'] = app_details['name']
+
+                application_details['containers'][app] = app_details['containers']
+            except Exception as e:
+                print "Error fetching application details for urls: {}".format(e.message)
+
+        return application_details

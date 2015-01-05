@@ -9,6 +9,7 @@ sys.path.append(dirname(realpath(__file__)) + '../' )
 
 from common.paasevents import write_event, get_events
 from api.resources.applications import Applications
+from api.resources.globalconfig import GlobalConfig
 
 #stupid docker-py, monkeypatch
 def pull_fix(self, repository, tag=None, registry=None):
@@ -59,12 +60,31 @@ q = Queue.Queue()
 change_queue = Queue.Queue()
 
 application = Applications(config)
+global_config = GlobalConfig(config)
 
 redis_conn = redis.StrictRedis(config.redis_host, db=0)
 
 cluster_state = {}
 
 import random
+import pika
+import json
+import os
+
+class Notifications(object):
+    def __init__(self):
+        parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/paas"))
+        self.connection = pika.BlockingConnection(parameters)
+        self.channel = self.connection.channel()
+
+    def callback(self, ch, method, properties, body):
+        try:
+            data = json.loads(body)
+        except:
+            print "Message is not in json format"
+
+    def send_message(self, routing, body):
+        self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
 
 def get_cluster_state():
     cluster_state = {}
@@ -300,6 +320,9 @@ def check_app():
                         redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
                         redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+                        data = application.get_all_urls()
+
+
 
 
                 except:
@@ -353,6 +376,7 @@ def delete_node(docker_ids, cluster_state):
         c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
         for docker_id in docker_ids:
             if docker_id in cluster_state['nodes'][node]:
+		c.stop(docker_id)
                 c.remove_container(docker_id)
 
 
