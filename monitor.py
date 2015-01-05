@@ -80,7 +80,6 @@ def get_cluster_state():
                 try:
                     container_details = c.inspect_container(docker_id)
                     cluster_state['nodes'][node][docker_id] = container_details
-                except Exception as e:
                     logger.info("Error getting container details: {}".format(e.message))
 
         except:
@@ -101,12 +100,12 @@ def process_change():
     logger.info("Starting app change thread")
     while True:
         app = change_queue.get()
-        logger.info("Processing update on app {}".format(app))
         locked = application.set_application_lock(app)
         if not locked:
+	    change_queue.put(app)
             continue
 
-        logger.info("Processing application update")
+        logger.info("Processing update on app {}".format(app))
 
         app_details = application.get(app)
 
@@ -142,6 +141,7 @@ def process_change():
             application.set_application_state(app, "DEPLOYING to {}".format(node))
             docker_id = r['Id']
             c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
+	    redis_conn.publish("containers", "New container created")
             redis_conn.set("docker_id#{}".format(docker_id), app)
             redis_conn.execute_command("SET", "docker_id:locked#{}".format(docker_id), "locked", "NX", "EX", 20)
             logger.info("Started new container {}".format(docker_id))
@@ -195,7 +195,7 @@ def check_app():
         logger.debug("{}:Check app".format(unique_app_id))
         locked = application.set_application_lock(app_id)
         if not locked:
-            q.task_done()
+	    q.put(data)
             continue
 
         logger.debug("{}:App locked and check started".format(unique_app_id))
