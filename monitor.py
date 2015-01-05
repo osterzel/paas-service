@@ -412,10 +412,12 @@ def monitor_loop():
         for i in missing_in_controller:
             redis_conn.delete("docker_id#{}".format(i))
 
-        for app in apps:
-            q.put({ "app": app, "cluster": cluster_state })
-
-        time.sleep(30)
+	if q.qsize() == 0:
+        	for app in apps:
+            		q.put({ "app": app, "cluster": cluster_state })
+	else:
+		print q.qsize()
+        	time.sleep(30)
 
 
 
