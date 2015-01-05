@@ -81,7 +81,8 @@ def get_cluster_state():
                     container_details = c.inspect_container(docker_id)
                     cluster_state['nodes'][node][docker_id] = container_details
                     logger.info("Error getting container details: {}".format(e.message))
-
+		except:
+		    logger.error("Unable to inspect instance")
         except:
             logger.error("Unable to connect to node {} to fetch cluster state".format(node))
 
