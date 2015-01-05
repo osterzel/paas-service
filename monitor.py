@@ -73,9 +73,11 @@ import os
 
 class Notifications(object):
     def __init__(self):
-        parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://guest:guest@localhost:5672/paas"))
+        parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas"))
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
+        self.channel.exchange_declare(exchange='paas',
+                         type='topic')
 
     def callback(self, ch, method, properties, body):
         try:
@@ -84,7 +86,10 @@ class Notifications(object):
             print "Message is not in json format"
 
     def send_message(self, routing, body):
+        print "Sending message"
         self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
+
+notification_handler = Notifications()
 
 def get_cluster_state():
     cluster_state = {}
@@ -161,7 +166,7 @@ def process_change():
             application.set_application_state(app, "DEPLOYING to {}".format(node))
             docker_id = r['Id']
             c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
-	    redis_conn.publish("containers", "New container created")
+            redis_conn.publish("containers", "New container created")
             redis_conn.set("docker_id#{}".format(docker_id), app)
             redis_conn.execute_command("SET", "docker_id:locked#{}".format(docker_id), "locked", "NX", "EX", 20)
             logger.info("Started new container {}".format(docker_id))
@@ -173,12 +178,12 @@ def process_change():
             successful = 0
             if output['State']['Running'] == False:
                 logs = c.logs(docker_id)
-		application.set_application_logs(app, node, logs)
+                application.set_application_logs(app, node, logs)
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
-		logs = c.logs(docker_id)
-		application.set_application_logs(app, node, logs)
+                logs = c.logs(docker_id)
+                application.set_application_logs(app, node, logs)
                 for key in current_containers:
 
                     data = redis_conn.hgetall(key)
@@ -199,6 +204,10 @@ def process_change():
 
                 redis_conn.hset("{}:{}".format(node, app), "docker_id", docker_id)
                 redis_conn.hset("{}:{}".format(node, app), "port", port)
+		try:
+                	notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
+		except Exception as e:
+			logger.info("Unable to send docker_container_update to exchange")
 
                 logger.info("Finished updating node {}".format(node))
                 redis_conn.hset("app#{}".format(app), "state", "RUNNING")
@@ -328,9 +337,10 @@ def check_app():
                         redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
                         data = application.get_all_urls()
-
-
-
+			try:
+                        	notification_handler.send_message('docker_container_updates', json.dumps(data))
+			except:
+				logger.info("Unable to send docker_container_update to exchange")
 
                 except:
                     logger.error("Error talking to docker node {}".format(node))
