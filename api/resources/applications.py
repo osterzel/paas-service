@@ -174,7 +174,7 @@ class Applications(object):
 
     def get_application_logs(self, name):
         raw_logs = self.redis_conn.hgetall("app#{}:logs".format(name))
-        return []
+        return raw_logs 
 
     def set_application_error_count(self, name):
         error_count = self.get_application_error_count(name)

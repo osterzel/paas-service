@@ -153,9 +153,12 @@ def process_change():
             successful = 0
             if output['State']['Running'] == False:
                 logs = c.logs(docker_id)
+		application.set_application_logs(app, node, logs)
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
+		logs = c.logs(docker_id)
+		application.set_application_logs(app, node, logs)
                 for key in current_containers:
 
                     data = redis_conn.hgetall(key)
