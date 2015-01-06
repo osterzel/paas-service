@@ -46,8 +46,6 @@ class Applications(object):
             (node, app_name) = key.split(":")
             if "port" in data:
                 containers.append("{}:{}".format(node, data['port']))
-            else:
-                containers.append(key)
 
         app_details['containers'] = containers
 
