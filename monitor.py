@@ -99,11 +99,16 @@ def test_web_container(node, port):
 	success = 0
 	for count in range(60):
 		try:
+			s = socket.socket()
 			socket.setdefaulttimeout(3)
 			s.connect((node, int(port)))
 			success = 1
+			print "Successfully connected"
+			s.close()
 			break
 		except socket.error, e:
+			print e.message
+			print "Error connecting"
 			time.sleep(2)
 
 	if success == 0:
@@ -209,15 +214,11 @@ def process_change():
 		if "web" in app_details['command']:
 			if not test_web_container(node, port): 
 				print "Container did not start successfully"
-				application.set_application_state("Failed deploying new container to %s" % (node))
+				application.set_application_state(app, "Failed deploying new container to %s" % (node))
 				continue
 		
                 logs = c.logs(docker_id)
                 application.set_application_logs(app, node, logs)
-		try:
-                	notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
-		except Exception as e:
-			logger.info("Unable to send docker_container_update to exchange")
                 for key in current_containers:
 
                     data = redis_conn.hgetall(key)
