@@ -172,7 +172,7 @@ def process_change():
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
-            time.sleep(1)
+            time.sleep(10)
             output = c.inspect_container(docker_id)
 
             successful = 0
@@ -327,7 +327,7 @@ def check_app():
                     write_event("CONTAINER_MONITOR", "Starting docker container {} on node {} for app_id {}".format(docker_id, node, app_id))
 
                     #Now wait until the inspect returns and says its running then we say its successful
-                    time.sleep(1)
+                    time.sleep(10)
                     output = c.inspect_container(docker_id)
                     if output['State']['Running'] == False:
                         logs = c.logs(docker_id)
