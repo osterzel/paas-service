@@ -70,6 +70,7 @@ import random
 import pika
 import json
 import os
+import socket
 
 class Notifications(object):
     def __init__(self):
@@ -90,6 +91,25 @@ class Notifications(object):
         self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
 
 notification_handler = Notifications()
+
+def test_web_container(node, port):
+	logger.info("Testing web container on %s:%s responds" % (node, port))
+	s = socket.socket()
+	success = 0
+	for count in range(60):
+		try:
+			s.connect((node, int(port)))
+			success = 1
+			break
+		except socket.error, e:
+			time.sleep(2)
+
+	if success == 0:
+		logger.info("Container did not respond after 60 seconds")
+		return False
+	else:
+		logger.info("Container responded")
+		return True
 
 def get_cluster_state():
     cluster_state = {}
@@ -172,7 +192,6 @@ def process_change():
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
-            time.sleep(10)
             output = c.inspect_container(docker_id)
 
             successful = 0
@@ -182,8 +201,18 @@ def process_change():
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
+		#First wait until the port responds on the container before continuing and putting into service
+		#if not test_web_container(node, port): 
+		#	print "Container did not start successfully"
+		#	application.set_application_state("Failed deploying new container to %s" % (node))
+		#	continue
+		
                 logs = c.logs(docker_id)
                 application.set_application_logs(app, node, logs)
+		try:
+                	notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
+		except Exception as e:
+			logger.info("Unable to send docker_container_update to exchange")
                 for key in current_containers:
 
                     data = redis_conn.hgetall(key)
@@ -334,6 +363,13 @@ def check_app():
                         redis_conn.hset("app#{}".format(app_id), "state", "Error updating application, {}".format(logs))
                         logger.info("Problem starting up new container\n Log info: {}".format(logs))
                     else:
+			#First wait until the port responds on the container before continuing and putting into service
+			#if not test_web_container(node, port): 
+			#	print "Container did not start successfully"
+			#	application.set_application_state(app, "Failed deploying new container to %s" % (node))
+			#	c.kill(docker_id)
+			#	c.remove_container(docker_id)
+			#	continue
                         redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
                         redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
