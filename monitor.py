@@ -400,24 +400,27 @@ def delete_node(docker_ids, cluster_state):
 
 def monitor_loop():
     list_size = 0
+    apps = redis_conn.lrange("monitor", 0 , -1 )
+    cluster_state = get_cluster_state()
+    for app in apps:
+    	q.put({ "app": app, "cluster": cluster_state })
     while True:
 
-        apps = redis_conn.lrange("monitor", 0 , -1 )
         #apps = ["aslive-trend-subscriber"]
-        cluster_state = get_cluster_state()
+        #cluster_state = get_cluster_state()
 
-        app_state = get_app_state()
+        #app_state = get_app_state()
 
-        missing_in_controller = list(set(app_state['containers']) - set(cluster_state['containers']))
-        for i in missing_in_controller:
-            redis_conn.delete("docker_id#{}".format(i))
+        #missing_in_controller = list(set(app_state['containers']) - set(cluster_state['containers']))
+        #for i in missing_in_controller:
+        #    redis_conn.delete("docker_id#{}".format(i))
 
-	if q.qsize() == 0:
-        	for app in apps:
-            		q.put({ "app": app, "cluster": cluster_state })
-	else:
-		print q.qsize()
-        	time.sleep(30)
+	#if q.qsize() == 0:
+        #	for app in apps:
+        #    		q.put({ "app": app, "cluster": cluster_state })
+	#else:
+	#	print q.qsize()
+        time.sleep(60)
 
 
 
