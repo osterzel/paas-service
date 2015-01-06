@@ -55,7 +55,7 @@ ch.setFormatter(formatter)
 
 logger.addHandler(ch)
 
-number_of_threads = 5
+number_of_threads = 2
 q = Queue.Queue()
 change_queue = Queue.Queue()
 
@@ -172,7 +172,7 @@ def process_change():
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
-            time.sleep(7)
+            time.sleep(1)
             output = c.inspect_container(docker_id)
 
             successful = 0
@@ -193,7 +193,7 @@ def process_change():
                         redis_conn.sadd("ports:{}".format(node), delete_port)
 
                     try:
-                        c.stop(delete_docker_id)
+			c.kill(delete_docker_id)
                         c.remove_container(delete_docker_id)
                     except Exception as e:
                         application.set_application_state(app, "Exception: {}".format(e.message))
@@ -227,7 +227,8 @@ def check_app():
         logger.debug("{}:Check app".format(unique_app_id))
         locked = application.set_application_lock(app_id)
         if not locked:
-	    q.put(data)
+	    logger.info("Unable to lock app")
+	    q.task_done()
             continue
 
         logger.debug("{}:App locked and check started".format(unique_app_id))
@@ -326,7 +327,7 @@ def check_app():
                     write_event("CONTAINER_MONITOR", "Starting docker container {} on node {} for app_id {}".format(docker_id, node, app_id))
 
                     #Now wait until the inspect returns and says its running then we say its successful
-                    time.sleep(7)
+                    time.sleep(1)
                     output = c.inspect_container(docker_id)
                     if output['State']['Running'] == False:
                         logs = c.logs(docker_id)
@@ -376,7 +377,7 @@ def check_nodes():
                     logger.info("stopping orphaned container {}".format(docker_id))
                     write_event("CONTAINER_MONITOR", "Destroying orphaned docker container {} on node {}".format(docker_id, node))
                     try:
-                        c.stop(docker_id)
+                        c.kill(docker_id)
                         c.remove_container(docker_id)
                     except Exception as e:
                         logger.error("Unable to remove container, error: {}".format(e.message))
@@ -392,7 +393,7 @@ def delete_node(docker_ids, cluster_state):
         for docker_id in docker_ids:
             if docker_id in cluster_state['nodes'][node]:
 		try:
-			c.stop(docker_id)
+			c.kill(docker_id)
                 	c.remove_container(docker_id)
 		except:
 			print "Error removing docker container as it doesnt exist"
@@ -405,21 +406,6 @@ def monitor_loop():
     for app in apps:
     	q.put({ "app": app, "cluster": cluster_state })
     while True:
-
-        #apps = ["aslive-trend-subscriber"]
-        #cluster_state = get_cluster_state()
-
-        #app_state = get_app_state()
-
-        #missing_in_controller = list(set(app_state['containers']) - set(cluster_state['containers']))
-        #for i in missing_in_controller:
-        #    redis_conn.delete("docker_id#{}".format(i))
-
-	#if q.qsize() == 0:
-        #	for app in apps:
-        #    		q.put({ "app": app, "cluster": cluster_state })
-	#else:
-	#	print q.qsize()
         time.sleep(60)
 
 
