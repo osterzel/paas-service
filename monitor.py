@@ -26,6 +26,7 @@ from requests import HTTPError
 docker.Client.pull = pull_fix
 
 import redis
+import re
 import time
 import threading
 
@@ -98,6 +99,7 @@ def test_web_container(node, port):
 	success = 0
 	for count in range(60):
 		try:
+			socket.setdefaulttimeout(3)
 			s.connect((node, int(port)))
 			success = 1
 			break
@@ -202,10 +204,13 @@ def process_change():
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
 		#First wait until the port responds on the container before continuing and putting into service
-		#if not test_web_container(node, port): 
-		#	print "Container did not start successfully"
-		#	application.set_application_state("Failed deploying new container to %s" % (node))
-		#	continue
+		
+		print app_details['command']
+		if "web" in app_details['command']:
+			if not test_web_container(node, port): 
+				print "Container did not start successfully"
+				application.set_application_state("Failed deploying new container to %s" % (node))
+				continue
 		
                 logs = c.logs(docker_id)
                 application.set_application_logs(app, node, logs)
@@ -364,12 +369,11 @@ def check_app():
                         logger.info("Problem starting up new container\n Log info: {}".format(logs))
                     else:
 			#First wait until the port responds on the container before continuing and putting into service
-			#if not test_web_container(node, port): 
-			#	print "Container did not start successfully"
-			#	application.set_application_state(app, "Failed deploying new container to %s" % (node))
-			#	c.kill(docker_id)
-			#	c.remove_container(docker_id)
-			#	continue
+			if "web" in app_details['command']:
+				if not test_web_container(node, port): 
+					print "Container did not start successfully"
+					application.set_application_state("Failed deploying new container to %s" % (node))
+					continue
                         redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
                         redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
