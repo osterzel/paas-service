@@ -317,11 +317,9 @@ def check_app():
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
             containers = redis_conn.keys("containers:{}:{}:*".format(node, app_id))
-            print containers
             for key in containers:
                 docker_id = redis_conn.hget(key, "docker_id")
                 #logger.debug("{}:Checking if app should be on node {}".format(unique_app_id,node))
-                print "%s : %s" % (key, docker_id)
 
                 if docker_id:
                     try:
@@ -418,8 +416,6 @@ def check_app():
                         redis_conn.hset("app#{}".format(app_id), "state", "Problem talking to node {}".format(node))
 
             if not containers:
-                print "So apparently no containers found"
-                print containers
                 #Get a free port for the node and allocate it to this container
                 if not redis_conn.exists("ports:{}".format(node)):
                     paas_init_lock = redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
