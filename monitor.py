@@ -458,12 +458,22 @@ def check_app():
                             if not test_web_container(node, port):
                                 print "Container did not start successfully"
                                 application.set_application_state("Failed deploying new container to %s" % (node))
+                                try:
+                                    c.kill(docker_id)
+                                except:
+                                    pass
+                                c.remove_container(docker_id)
                                 continue
                         else:
                             if not "app" in app_details['app_type']:
                                 if not test_web_container(node, port):
                                     print "Container did not start successfully"
                                     application.set_application_state("Failed deploying new container to %s" % (node))
+                                    try:
+                                        c.kill(docker_id)
+                                    except:
+                                        pass
+                                    c.remove_container(docker_id)
                                     continue
 
                         redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
