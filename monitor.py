@@ -174,7 +174,7 @@ def process_change():
 
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
-            current_containers = redis_conn.keys("{}:{}".format(node, app))
+            current_containers = redis_conn.keys("containers:{}:{}:*".format(node, app))
 
             #Get a free port for the node and allocate it to this container
             if not redis_conn.exists("ports:{}".format(node)):
@@ -199,7 +199,7 @@ def process_change():
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
-	    time.sleep(12)
+            time.sleep(12)
             output = c.inspect_container(docker_id)
 
             successful = 0
@@ -209,20 +209,30 @@ def process_change():
                 redis_conn.hset("app#{}".format(app), "state", "Error updating application, {}".format(logs))
                 logger.info("Problem starting up new container\n Log info: {}".format(logs))
             else:
-		#First wait until the port responds on the container before continuing and putting into service
-		
-		if not "app_type" in app_details:
-			if not test_web_container(node, port): 
-				print "Container did not start successfully"
-				application.set_application_state(app, "Failed deploying new container to %s" % (node))
-				continue
-		else:
-			if not "app" in app_details['app_type']:
-				if not test_web_container(node, port): 
-					print "Container did not start successfully"
-					application.set_application_state(app, "Failed deploying new container to %s" % (node))
-					continue
-		
+                #First wait until the port responds on the container before continuing and putting into service
+
+
+                if not "app_type" in app_details:
+                    if not test_web_container(node, port):
+                        print "Container did not start successfully"
+                        application.set_application_state(app, "Failed deploying new container to %s" % (node))
+                        continue
+                else:
+                    if not "app" in app_details['app_type']:
+                        if not test_web_container(node, port):
+                            print "Container did not start successfully"
+                            application.set_application_state(app, "Failed deploying new container to %s" % (node))
+                            continue
+
+                redis_conn.hset("containers:{}:{}:{}".format(node, app, port), "docker_id", docker_id)
+                redis_conn.hset("containers:{}:{}:{}".format(node, app, port), "port", port)
+
+                try:
+                    notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
+                except Exception as e:
+                    logger.info("Unable to send docker_container_update to exchange")
+
+
                 logs = c.logs(docker_id)
                 application.set_application_logs(app, node, logs)
                 for key in current_containers:
@@ -234,7 +244,7 @@ def process_change():
                         redis_conn.sadd("ports:{}".format(node), delete_port)
 
                     try:
-			c.kill(delete_docker_id)
+                        c.kill(delete_docker_id)
                         c.remove_container(delete_docker_id)
                     except Exception as e:
                         application.set_application_state(app, "Exception: {}".format(e.message))
@@ -243,17 +253,15 @@ def process_change():
                     redis_conn.delete("docker_id#{}".format(delete_docker_id))
                     logger.info("Deleted old container {}".format(delete_docker_id))
 
-                redis_conn.hset("{}:{}".format(node, app), "docker_id", docker_id)
-                redis_conn.hset("{}:{}".format(node, app), "port", port)
-		try:
-                	notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
-		except Exception as e:
-			logger.info("Unable to send docker_container_update to exchange")
+                try:
+                    notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
+                except Exception as e:
+                    logger.info("Unable to send docker_container_update to exchange")
 
-                logger.info("Finished updating node {}".format(node))
-                redis_conn.hset("app#{}".format(app), "state", "RUNNING")
+        logger.info("Finished updating node {}".format(node))
+        redis_conn.hset("app#{}".format(app), "state", "RUNNING")
 
-            redis_conn.delete("docker_id:locked#{}".format(docker_id))
+        redis_conn.delete("docker_id:locked#{}".format(docker_id))
 
         change_queue.task_done()
         application.remove_application_lock(app)
@@ -263,13 +271,14 @@ def check_app():
     while True:
         data = q.get()
         app_id = data['app']
+        print app_id
         cluster_state = data['cluster']
         unique_app_id = "{}.{}".format(app_id, random.random())
         logger.debug("{}:Check app".format(unique_app_id))
         locked = application.set_application_lock(app_id)
         if not locked:
-	    logger.info("Unable to lock app")
-	    q.task_done()
+    	    logger.info("Unable to lock app")
+    	    q.task_done()
             continue
 
         logger.debug("{}:App locked and check started".format(unique_app_id))
@@ -301,43 +310,110 @@ def check_app():
         if not docker_image:
             #logger.info("{} - image not set, skipping".format(app_id))
             redis_conn.delete("app#{}:locked".format(app_id))
-            #redis_conn.expire("app#{}:locked".format(app_id), 1)
+        #redis_conn.expire("app#{}:locked".format(app_id), 1)
             q.task_done()
             continue
 
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
-            docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
-            #logger.debug("{}:Checking if app should be on node {}".format(unique_app_id,node))
+            containers = redis_conn.keys("containers:{}:{}:*")
+            print containers
+            for key in containers:
+                docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
+                #logger.debug("{}:Checking if app should be on node {}".format(unique_app_id,node))
 
-            if docker_id:
-                try:
-                    #container_details = cluster_state[node][docker_id]
-                    container_details = c.inspect_container(docker_id)
-		    try:
-                    	container_logs = c.logs(docker_id)
-		    except:
-			logger.error("Unable to fetch logs for {}".format(docker_id))
-		   
-                    # redis.setex("docker_id#{}:logs".format(docker_id), container_logs)
-		    try:
-                    	application.set_application_logs(app_id, node, container_logs)
-		    except:
-			logger.error("Problem setting application logs")
-                except (HTTPError, KeyError):
-                    logger.info("Error fetching container details")
-                    container_details = { "State": { "Running": False } }
+                if docker_id:
+                    try:
+                        #container_details = cluster_state[node][docker_id]
+                        container_details = c.inspect_container(docker_id)
+                        try:
+                            container_logs = c.logs(docker_id)
+                        except:
+                            logger.error("Unable to fetch logs for {}".format(docker_id))
 
-                if not container_details["State"]["Running"]:
-                    docker_id = None
-                    status = redis_conn.delete("docker_id#{}".format(docker_id))
-                    redis_conn.delete("app#{}:locked".format(app_id))
-                    count = 0
-                    count = application.set_application_error_count(app_id)
-                    logger.info("Application Error Count: {}".format(count))
-                    redis_conn.hset("app#{}".format(app_id), "error_count", count)
+                        # redis.setex("docker_id#{}:logs".format(docker_id), container_logs)
+                        try:
+                            application.set_application_logs(app_id, node, container_logs)
+                        except:
+                            logger.error("Problem setting application logs")
+                    except (HTTPError, KeyError):
+                        logger.info("Error fetching container details")
+                        container_details = { "State": { "Running": False } }
 
-            if not docker_id:
+                    if not container_details["State"]["Running"]:
+                        docker_id = None
+                        status = redis_conn.delete("docker_id#{}".format(docker_id))
+                        redis_conn.delete("app#{}:locked".format(app_id))
+                        count = 0
+                        count = application.set_application_error_count(app_id)
+                        logger.info("Application Error Count: {}".format(count))
+                        redis_conn.hset("app#{}".format(app_id), "error_count", count)
+
+                if not docker_id:
+                    #Get a free port for the node and allocate it to this container
+                    if not redis_conn.exists("ports:{}".format(node)):
+                        paas_init_lock = redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
+                        if not paas_init_lock:
+                            raise Exception
+                        redis_conn.sadd("ports:{}".format(node), *range(49152, 65535))
+                    port = redis_conn.spop("ports:{}".format(node))
+
+                    redis_conn.hset("app#{}".format(app_id), "state", "DEPLOYING to {}".format(node))
+                    logger.info("{} - starting runner on {}".format(app_id, node))
+                    repository, _, tag = docker_image.rpartition(":")
+                    if repository == "":
+                       repository = docker_image
+                    c.pull(repository, tag)
+
+                    try:
+                        r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items() ), mem_limit=memory, name="{}_{}".format(app_id, port))
+                    except Exception as e:
+                        application.set_application_state(app_id, "Exception: {}".format(e.message))
+                        logger.error("Error creating docker image")
+                        continue
+
+                    docker_id = r["Id"]
+                    try:
+                        redis_conn.set("docker_id#{}".format(docker_id), app_id)
+                        redis_conn.execute_command("SET", "docker_id:locked#{}".format(docker_id), "locked", "NX", "EX", 60)
+                        c.start(docker_id, port_bindings={"{}/tcp".format(port): port})
+                        write_event("CONTAINER_MONITOR", "Starting docker container {} on node {} for app_id {}".format(docker_id, node, app_id))
+
+                        #Now wait until the inspect returns and says its running then we say its successful
+                        time.sleep(10)
+                        output = c.inspect_container(docker_id)
+                        if output['State']['Running'] == False:
+                            logs = c.logs(docker_id)
+                            redis_conn.hset("app#{}".format(app_id), "state", "Error updating application, {}".format(logs))
+                            logger.info("Problem starting up new container\n Log info: {}".format(logs))
+                        else:
+                            #First wait until the port responds on the container before continuing and putting into service
+                            if not "app_type" in app_details:
+                                if not test_web_container(node, port):
+                                    print "Container did not start successfully"
+                                    application.set_application_state("Failed deploying new container to %s" % (node))
+                                    continue
+                            else:
+                                if not "app" in app_details['app_type']:
+                                    if not test_web_container(node, port):
+                                        print "Container did not start successfully"
+                                        application.set_application_state("Failed deploying new container to %s" % (node))
+                                        continue
+                                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
+                                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
+                                        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+                                        data = application.get_all_urls()
+                                        try:
+                                            notification_handler.send_message('docker_container_updates', json.dumps(data))
+                                        except:
+                                            logger.info("Unable to send docker_container_update to exchange")
+
+                    except:
+                        logger.error("Error talking to docker node {}".format(node))
+                        write_event("CONTAINER_MONITOR", "Failed talking to node {} to start {}".format(node, app_id))
+                        redis_conn.hset("app#{}".format(app_id), "state", "Problem talking to node {}".format(node))
+
+            if not containers:
                 #Get a free port for the node and allocate it to this container
                 if not redis_conn.exists("ports:{}".format(node)):
                     paas_init_lock = redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
@@ -375,31 +451,33 @@ def check_app():
                         redis_conn.hset("app#{}".format(app_id), "state", "Error updating application, {}".format(logs))
                         logger.info("Problem starting up new container\n Log info: {}".format(logs))
                     else:
-			#First wait until the port responds on the container before continuing and putting into service
-			if not app_details['app_type']:
-				if not test_web_container(node, port): 
-					print "Container did not start successfully"
-					application.set_application_state("Failed deploying new container to %s" % (node))
-					continue
-			else:
-				if not "app" in app_details['app_type']:
-					if not test_web_container(node, port): 
-						print "Container did not start successfully"
-						application.set_application_state("Failed deploying new container to %s" % (node))
-						continue
-                        redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
-                        redis_conn.hset("{}:{}".format(node, app_id), "port", port)
-                        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
-                        data = application.get_all_urls()
-			try:
-                        	notification_handler.send_message('docker_container_updates', json.dumps(data))
-			except:
-				logger.info("Unable to send docker_container_update to exchange")
+                        #First wait until the port responds on the container before continuing and putting into service
+                        if not "app_type" in app_details:
+                            if not test_web_container(node, port):
+                                print "Container did not start successfully"
+                                application.set_application_state("Failed deploying new container to %s" % (node))
+                                continue
+                        else:
+                            if not "app" in app_details['app_type']:
+                                if not test_web_container(node, port):
+                                    print "Container did not start successfully"
+                                    application.set_application_state("Failed deploying new container to %s" % (node))
+                                    continue
+                                    redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
+                                    redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
+                                    redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+                                    data = application.get_all_urls()
+                                    try:
+                                        notification_handler.send_message('docker_container_updates', json.dumps(data))
+                                    except:
+                                        logger.info("Unable to send docker_container_update to exchange")
 
-                except:
+                except Exception as e:
+                    print e.message
                     logger.error("Error talking to docker node {}".format(node))
                     write_event("CONTAINER_MONITOR", "Failed talking to node {} to start {}".format(node, app_id))
                     redis_conn.hset("app#{}".format(app_id), "state", "Problem talking to node {}".format(node))
+
 
 
         # allow next check in 10s
@@ -455,6 +533,7 @@ def delete_node(docker_ids, cluster_state):
 def monitor_loop():
     list_size = 0
     apps = redis_conn.lrange("monitor", 0 , -1 )
+    print apps
     cluster_state = get_cluster_state()
     for app in apps:
     	q.put({ "app": app, "cluster": cluster_state })

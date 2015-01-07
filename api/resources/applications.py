@@ -39,11 +39,11 @@ class Applications(object):
             raise Exception
 
         #Fetch all containers that match this application
-        keys = self.redis_conn.keys("*:{}".format(name))
+        keys = self.redis_conn.keys("containers:*:{}:*".format(name))
         containers = []
         for key in keys:
             data = self.redis_conn.hgetall(key)
-            (node, app_name) = key.split(":")
+            (container_placeholder, node, app_name, port) = key.split(":")
             if "port" in data:
                 containers.append("{}:{}".format(node, data['port']))
 
