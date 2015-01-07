@@ -316,11 +316,12 @@ def check_app():
 
         for node in redis_conn.smembers("hosts"):
             c = docker.Client(base_url='http://{}:4243'.format(node), version="1.12")
-            containers = redis_conn.keys("containers:{}:{}:*")
+            containers = redis_conn.keys("containers:{}:{}:*".format(node, app_id))
             print containers
             for key in containers:
-                docker_id = redis_conn.hget("{}:{}".format(node, app_id), "docker_id")
+                docker_id = redis_conn.hget(key, "docker_id")
                 #logger.debug("{}:Checking if app should be on node {}".format(unique_app_id,node))
+                print "%s : %s" % (key, docker_id)
 
                 if docker_id:
                     try:
@@ -336,7 +337,9 @@ def check_app():
                             application.set_application_logs(app_id, node, container_logs)
                         except:
                             logger.error("Problem setting application logs")
-                    except (HTTPError, KeyError):
+                    except (HTTPError, KeyError) as e:
+                        print e.message
+
                         logger.info("Error fetching container details")
                         container_details = { "State": { "Running": False } }
 
@@ -399,7 +402,7 @@ def check_app():
                                         print "Container did not start successfully"
                                         application.set_application_state("Failed deploying new container to %s" % (node))
                                         continue
-                                        
+
                             redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
                             redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
                             redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
@@ -415,6 +418,8 @@ def check_app():
                         redis_conn.hset("app#{}".format(app_id), "state", "Problem talking to node {}".format(node))
 
             if not containers:
+                print "So apparently no containers found"
+                print containers
                 #Get a free port for the node and allocate it to this container
                 if not redis_conn.exists("ports:{}".format(node)):
                     paas_init_lock = redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
