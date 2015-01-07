@@ -399,14 +399,15 @@ def check_app():
                                         print "Container did not start successfully"
                                         application.set_application_state("Failed deploying new container to %s" % (node))
                                         continue
-                                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
-                                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
-                                        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
-                                        data = application.get_all_urls()
-                                        try:
-                                            notification_handler.send_message('docker_container_updates', json.dumps(data))
-                                        except:
-                                            logger.info("Unable to send docker_container_update to exchange")
+                                        
+                            redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
+                            redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
+                            redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+                            data = application.get_all_urls()
+                            try:
+                                notification_handler.send_message('docker_container_updates', json.dumps(data))
+                            except:
+                                logger.info("Unable to send docker_container_update to exchange")
 
                     except:
                         logger.error("Error talking to docker node {}".format(node))
@@ -463,14 +464,15 @@ def check_app():
                                     print "Container did not start successfully"
                                     application.set_application_state("Failed deploying new container to %s" % (node))
                                     continue
-                                    redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
-                                    redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
-                                    redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
-                                    data = application.get_all_urls()
-                                    try:
-                                        notification_handler.send_message('docker_container_updates', json.dumps(data))
-                                    except:
-                                        logger.info("Unable to send docker_container_update to exchange")
+
+                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "docker_id", docker_id)
+                        redis_conn.hset("containers:{}:{}:{}".format(node, app_id, port), "port", port)
+                        redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
+                        data = application.get_all_urls()
+                        try:
+                            notification_handler.send_message('docker_container_updates', json.dumps(data))
+                        except:
+                            logger.info("Unable to send docker_container_update to exchange")
 
                 except Exception as e:
                     print e.message
