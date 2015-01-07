@@ -108,7 +108,6 @@ def test_web_container(node, port):
 			break
 		except socket.error, e:
 			print e.message
-			print "Error connecting"
 			time.sleep(2)
 
 	if success == 0:
@@ -199,6 +198,7 @@ def process_change():
             logger.info("Started new container {}".format(docker_id))
 
             #Now wait until the inspect returns and says its running then we say its successful
+	    time.sleep(12)
             output = c.inspect_container(docker_id)
 
             successful = 0
@@ -210,8 +210,8 @@ def process_change():
             else:
 		#First wait until the port responds on the container before continuing and putting into service
 		
-		print app_details['command']
-		if "web" in app_details['command']:
+		print app_details['app_type']
+		if not "app" in app_details['app_type']
 			if not test_web_container(node, port): 
 				print "Container did not start successfully"
 				application.set_application_state(app, "Failed deploying new container to %s" % (node))
@@ -370,7 +370,7 @@ def check_app():
                         logger.info("Problem starting up new container\n Log info: {}".format(logs))
                     else:
 			#First wait until the port responds on the container before continuing and putting into service
-			if "web" in app_details['command']:
+			if not "app" in app_details['app_type']:
 				if not test_web_container(node, port): 
 					print "Container did not start successfully"
 					application.set_application_state("Failed deploying new container to %s" % (node))
