@@ -210,12 +210,17 @@ def process_change():
             else:
 		#First wait until the port responds on the container before continuing and putting into service
 		
-		print app_details['app_type']
-		if not "app" in app_details['app_type']
+		if not "app_type" in app_details:
 			if not test_web_container(node, port): 
 				print "Container did not start successfully"
 				application.set_application_state(app, "Failed deploying new container to %s" % (node))
 				continue
+		else:
+			if not "app" in app_details['app_type']:
+				if not test_web_container(node, port): 
+					print "Container did not start successfully"
+					application.set_application_state(app, "Failed deploying new container to %s" % (node))
+					continue
 		
                 logs = c.logs(docker_id)
                 application.set_application_logs(app, node, logs)
@@ -370,11 +375,17 @@ def check_app():
                         logger.info("Problem starting up new container\n Log info: {}".format(logs))
                     else:
 			#First wait until the port responds on the container before continuing and putting into service
-			if not "app" in app_details['app_type']:
+			if not app_details['app_type']:
 				if not test_web_container(node, port): 
 					print "Container did not start successfully"
 					application.set_application_state("Failed deploying new container to %s" % (node))
 					continue
+			else:
+				if not "app" in app_details['app_type']:
+					if not test_web_container(node, port): 
+						print "Container did not start successfully"
+						application.set_application_state("Failed deploying new container to %s" % (node))
+						continue
                         redis_conn.hset("{}:{}".format(node, app_id), "docker_id", docker_id)
                         redis_conn.hset("{}:{}".format(node, app_id), "port", port)
                         redis_conn.hset("app#{}".format(app_id), "state", "RUNNING")
