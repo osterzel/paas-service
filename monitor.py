@@ -76,6 +76,7 @@ import socket
 class Notifications(object):
     def __init__(self):
         parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas"))
+	print "RabbitMQ Url: {}".format(parameters)
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
         self.channel.exchange_declare(exchange='paas',
