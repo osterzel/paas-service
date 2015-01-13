@@ -561,8 +561,8 @@ def monitor_loop():
     apps = redis_conn.lrange("monitor", 0 , -1 )
     print apps
     cluster_state = get_cluster_state()
-    for app in apps:
-    	q.put({ "app": app, "cluster": cluster_state })
+    #for app in apps:
+    #	q.put({ "app": app, "cluster": cluster_state })
     while True:
         time.sleep(60)
 
