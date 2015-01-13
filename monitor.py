@@ -36,6 +36,7 @@ import threading
 from common.config import Config
 import logging
 import pprint
+import pika
 
 config = Config()
 
@@ -68,19 +69,22 @@ redis_conn = redis.StrictRedis(config.redis_host, db=0)
 cluster_state = {}
 
 import random
-import pika
 import json
 import os
 import socket
 
 class Notifications(object):
     def __init__(self):
-        parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas"))
-	print "RabbitMQ Url: {}".format(parameters)
-        self.connection = pika.BlockingConnection(parameters)
-        self.channel = self.connection.channel()
-        self.channel.exchange_declare(exchange='paas',
-                         type='topic')
+        self.connection = None 
+        self.parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas?heartbeat=5"))
+	print "RabbitMQ Url: {}".format(self.parameters)
+	self.establish_connection(self.parameters)
+
+    def establish_connection(self, parameters):
+	self.connection = pika.BlockingConnection(parameters)
+	self.channel = self.connection.channel()
+	self.channel.exchange_declare(exchange='paas', type='topic')
+	logger.info("Connection established to queue")
 
     def callback(self, ch, method, properties, body):
         try:
@@ -89,8 +93,16 @@ class Notifications(object):
             print "Message is not in json format"
 
     def send_message(self, routing, body):
-        print "Sending message"
-        self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
+	logger.info("Sending Message")
+	try:
+        	self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
+	except:
+		try:
+			self.establish_connection(self.parameters)
+        		self.channel.basic_publish(exchange='paas', routing_key=routing, body=body)
+		except Exception as e:
+			logger.error("Unable to send message to queue: {}".format(e.message))
+
 
 notification_handler = Notifications()
 
@@ -104,7 +116,7 @@ def test_web_container(node, port):
 			socket.setdefaulttimeout(3)
 			s.connect((node, int(port)))
 			success = 1
-			print "Successfully connected"
+			logger.info("Successfully connected to web container")
 			s.close()
 			break
 		except socket.error, e:
@@ -134,7 +146,8 @@ def get_cluster_state():
                     cluster_state['nodes'][node][docker_id] = container_details
 		except Exception as e:
                     logger.info("Error getting container details: {}".format(e.message))
-        except:
+        except Exception as e:
+	    print e.message
             logger.error("Unable to connect to node {} to fetch cluster state".format(node))
 
     return cluster_state
@@ -230,7 +243,7 @@ def process_change():
                 try:
                     notification_handler.send_message('docker_container_updates', json.dumps(application.get_all_urls()))
                 except Exception as e:
-                    logger.info("Unable to send docker_container_update to exchange")
+                    logger.info("Unable to send docker_container_update to exchange {}".format(e.message))
 
 
                 logs = c.logs(docker_id)
