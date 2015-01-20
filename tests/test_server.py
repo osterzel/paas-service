@@ -22,32 +22,32 @@ class TestServer(unittest.TestCase):
         pass
 
     def test_toplevel_url(self):
-        output = self.flask_app.get("/")
-        self.assertEqual(404, output.status_code)
+        response = self.flask_app.get("/")
+        self.assertEqual(404, response.status_code)
 
     def test_api_endpoint_codes(self):
 
-        output = self.flask_app.get("/app/")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/app/")
+        self.assertEqual(200, response.status_code)
 
-        output = self.flask_app.get("/global/")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/global/")
+        self.assertEqual(200, response.status_code)
 
     def test_web_endpoint_codes(self):
-        output = self.flask_app.get("/web/")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/web/")
+        self.assertEqual(200, response.status_code)
 
-        output = self.flask_app.get("/web/dashboard")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/web/dashboard")
+        self.assertEqual(200, response.status_code)
 
-        output = self.flask_app.get("/web/events")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/web/events")
+        self.assertEqual(200, response.status_code)
 
-        output = self.flask_app.get("/web/application/nonfound_testapplication")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/web/application/nonfound_testapplication")
+        self.assertEqual(200, response.status_code)
 
-        output = self.flask_app.get("/web/global")
-        self.assertEqual(200, output.status_code)
+        response = self.flask_app.get("/web/global")
+        self.assertEqual(200, response.status_code)
 
 
 

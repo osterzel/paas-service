@@ -4,3 +4,4 @@
 target
 paas-controller-venv
 *.swp
+venv

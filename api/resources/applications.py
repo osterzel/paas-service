@@ -8,6 +8,7 @@ sys.path.append(dirname(realpath(__file__)) + '../../' )
 from datetime import datetime
 import redis
 import re
+import docker
 
 from common.paasevents import write_event, get_events
 import common.exceptions as exceptions
@@ -39,13 +40,14 @@ class Applications(object):
             raise Exception
 
         #Fetch all containers that match this application
-        keys = self.redis_conn.keys("containers:*:{}:*".format(name))
         containers = []
-        for key in keys:
-            data = self.redis_conn.hgetall(key)
-            (container_placeholder, node, app_name, port) = key.split(":")
-            if "port" in data:
-                containers.append("{}:{}".format(node, data['port']))
+        for host in self.redis_conn.smembers("hosts"):
+		c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
+		find_containers = c.containers()
+		for container in find_containers:
+                    if name in str(container['Names']) and "_web_" in str(container['Names']):
+			port = container['Names'][0].split('_')[-1]
+			containers.append("{}:{}".format(host, port))
 
         app_details['containers'] = containers
 
@@ -65,12 +67,6 @@ class Applications(object):
     def create_application(self, data):
 
         #Don't allocate port her but rather when we come to create a container we allocate a port to that
-
-        #if not self.redis_conn.exists("ports"):
-        #    paas_init_lock = self.redis_conn.execute_command("SET", "initlock", "locked", "NX", "EX", "60")
-        #    if not paas_init_lock:
-        #        raise Exception
-        #    self.redis_conn.sadd("ports", *range(49152, 65535))
 
         name = data['name']
 
@@ -155,7 +151,6 @@ class Applications(object):
         pipe.delete("{}:environment".format(name))
         pipe.lrem("monitor", 0, name)
         pipe.srem("apps", name)
-        pipe.sadd("ports", port)
         pipe.execute()
 
         write_event("DELETE APP", "Deleted app - {}".format(name), name)
@@ -167,6 +162,9 @@ class Applications(object):
 
     def set_application_state(self, name, message):
         self.redis_conn.hset("app#{}".format(name), "state", message)
+
+    def get_application_state(self, name):
+	return self.redis_conn.hget("app#{}".format(name), "state")
 
     def set_application_logs(self, name, node, container_logs):
         self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
@@ -222,3 +220,16 @@ class Applications(object):
                 print "Error fetching application details for urls: {}".format(e.message)
 
         return application_details
+
+    def allocate_port(self):
+	if not self.redis_conn.exists("ports"):
+		self.redis_conn.sadd("ports", *range(30000,60000))
+	port = self.redis_conn.spop("ports")
+	return port
+
+    def return_port(self, port):
+	try:
+		self.redis_conn.sadd("ports", port)
+		return True
+	except:
+		return False
