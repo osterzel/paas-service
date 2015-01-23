@@ -51,6 +51,9 @@ class DockerFunctions():
 					s = socket.socket()
 					success = 0
       	 	 			for count in range(60):
+						r = c.inspect_container(container)
+						if r['State']['Running'] == False:
+							return False
 	                			try:
 	                        			s = socket.socket()
 	                        			socket.setdefaulttimeout(3)
