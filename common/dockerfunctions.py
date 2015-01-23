@@ -96,11 +96,11 @@ class DockerFunctions():
 
 		if app_type == "web":
 			port = self.application.allocate_port()
-                	r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
+       	       	 	r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
 			c.start(r['Id'], port_bindings={"{}/tcp".format(port): port})
 		else:
 			app_unique = uuid.uuid1()
-                	r = c.create_container(docker_image, command, environment=dict( environment.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, app_unique))
+       	         	r = c.create_container(docker_image, command, environment=dict( environment.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, app_unique))
 			c.start(r['Id'])
 
 		#Put info on queue to update loadbalancer

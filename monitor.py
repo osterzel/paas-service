@@ -37,14 +37,18 @@ def process_applications():
 				try:
 					app_class = DockerFunctions(app, nodes, config, notifications)
 					ss = Scheduler(app_class.start_instance, app_class.shutdown_instance, app_class.list_nodes, app_class.health_check, 1)
+					print "Starting scheduler"
 					output = list(ss.run(1))
+					print "Finished scheduler"
 					print output
 					if ss.success == True:
 						application.set_application_state(app, "RUNNING")
 					else:
 						application.set_application_state(app, "ERROR: Problem deploying application, {}".format(output))
 				except Exception as e:
+					print "======= Scheduler Failed"
 					application.set_application_state(app, e.message)
+					sys.exit(1)
 				application.remove_application_lock(app)
 		time.sleep(10)
 
