@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean tests
 
 venv: venv/bin/activate 
 venv/bin/activate: requirements.txt
