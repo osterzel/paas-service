@@ -2,7 +2,7 @@ Flask==0.10.1
 Flask-RESTful==0.2.12
 Jinja2==2.7.3
 gunicorn==19.1.1
-docker-py==0.4.0
+docker-py==0.5.3
 argparse==1.2.1
 redis==2.10.3
 pika==0.9.13

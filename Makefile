@@ -9,7 +9,7 @@ venv/bin/activate: requirements.txt
 tests: venv
 	venv/bin/pip install -Uqr requirements-tests.txt	
 	test -d target || mkdir target
-	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web
+	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server
 
 clean:
 	rm -rf venv
