@@ -29,7 +29,7 @@ class TestApplication(unittest.TestCase):
             "memory_in_mb": 128,
             "command": "test command",
             "docker_image": "test/dockerimage",
-            "type": "daemon"
+	    "type": "web"
         }
 
 
@@ -72,6 +72,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(self.test_application, output['name'])
         self.assertEqual(512, output['memory_in_mb'])
         self.assertEqual("testapplication", output['urls'])
+	self.assertEqual("web", output['type'])
 
         output = self.application.get(self.test_application)
         self.assertEqual(self.test_application, output['name'])

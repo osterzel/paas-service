@@ -62,6 +62,18 @@
 				return JSON.stringify(send_data);
 	       		}
 		  });
+		$('#type').editable({
+			url: '/app/{{ app.name }}',
+			params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+			},
+			source: [ { value: "web", text: "Web Container - Exposes a http port" }, { value: "app", text: "App Container - No port exposed" } ]
+		  });
 
                 {% for environment_entry in app.environment %}
                   $('#{{environment_entry}}').editable({
@@ -172,6 +184,10 @@
                 <td>URLS</td>
                 <td><a href="#" id="urls" data-type="textarea" data-pk="1">{{ app.urls }}</a></td>
             </tr>
+	    <tr>
+		<td>Application Type</td>
+		<td><a href="#" id="type" data-type="select" data-value="{{ app.type }}" data-pk="1" data-title="App type">{{ app.type }}</a></td>
+	    </tr>
 			<tr>
 				<td>Containers</td>
 				<td>{{ app.containers }}</td>
