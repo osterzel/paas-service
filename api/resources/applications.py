@@ -122,6 +122,7 @@ class Applications(object):
 
         if "type" in data:
             pipe.hset("app#{}".format(name), "type", data['type'])
+	    pipe.hdel("app#{}".format(name), "app_type")
 
         if "environment" in data:
             if "PORT" in data["environment"].keys():
