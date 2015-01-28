@@ -94,8 +94,11 @@ class DockerFunctions():
 		command = app_details['command'].split()
 
 		app_type = "web"
-		if "type" in app_details:
-			app_type = app_details['type']
+		if "app_type" in app_details:
+			app_type = app_details['app_type']
+		else:
+			if "type" in app_details:
+				app_type = app_details['type']
 
 		if app_type == "web":
 			port = self.application.allocate_port()
