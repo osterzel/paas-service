@@ -33,10 +33,10 @@ def process_applications():
 				apps.append(name)
 		for app in apps: 
 				print app
-				if not application.set_application_lock(app):
-					continue
-				else:
-					print app
+				#if not application.set_application_lock(app):
+				#	continue
+				#else:
+				#	print app
 
 				try:
 					app_class = DockerFunctions(app, nodes, config, notifications)
@@ -52,8 +52,8 @@ def process_applications():
 				except Exception as e:
 					print "======= Scheduler Failed"
 					application.set_application_state(app, e.message)
-				application.remove_application_lock(app)
-		time.sleep(10)
+				#application.remove_application_lock(app)
+		time.sleep(5)
 
 if __name__ == '__main__':
 	process_applications()

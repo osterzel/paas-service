@@ -104,12 +104,10 @@ class DockerFunctions():
 			port = self.application.allocate_port()
        	       	 	r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
 			c.start(r['Id'], port_bindings={"{}/tcp".format(port): port})
-			c.wait(r['Id'])
 		else:
 			app_unique = uuid.uuid1()
        	         	r = c.create_container(docker_image, command, environment=dict( environment.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, app_unique))
 			c.start(r['Id'])
-			c.wait(r['Id'])
 
 		#Put info on queue to update loadbalancer
 		self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls())) 
