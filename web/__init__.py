@@ -28,7 +28,7 @@ def admin_dashboard():
 
     apps = list()
     for app in list(g.application.get_all()['data']):
-        apps.append(g.application.get(app))
+        apps.append(g.application.get(app, containers = False))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
 
@@ -41,7 +41,7 @@ def application_admin(app_name):
 
     apps = list()
     for app in list(g.application.get_all()['data']):
-        apps.append(g.application.get(app))
+        apps.append(g.application.get(app, containers = False))
 
     try:
         app = g.application.get(app_name)

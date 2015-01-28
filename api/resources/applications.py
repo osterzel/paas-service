@@ -23,7 +23,7 @@ class Applications(object):
         applications = list(self.redis_conn.smembers("apps"))
         return { "data": applications }
 
-    def get(self, name):
+    def get(self, name, containers=True):
         app_details = self.redis_conn.hgetall("app#{}".format(name))
         if not app_details:
             raise Exception
@@ -40,16 +40,17 @@ class Applications(object):
             raise Exception
 
         #Fetch all containers that match this application
-        containers = []
-        for host in self.redis_conn.smembers("hosts"):
-		c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
-		find_containers = c.containers()
-		for container in find_containers:
-                    if name in str(container['Names']) and "_web_" in str(container['Names']):
-			port = container['Names'][0].split('_')[-1]
-			containers.append("{}:{}".format(host, port))
+	if containers == True:
+	        containers = []
+	        for host in self.redis_conn.smembers("hosts"):
+			c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
+			find_containers = c.containers()
+			for container in find_containers:
+	                    if name in str(container['Names']) and "_web_" in str(container['Names']):
+				port = container['Names'][0].split('_')[-1]
+				containers.append("{}:{}".format(host, port))
 
-        app_details['containers'] = containers
+	        app_details['containers'] = containers
 
         if not "urls" in app_details:
             try:
