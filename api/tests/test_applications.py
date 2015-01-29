@@ -32,7 +32,6 @@ class TestApplication(unittest.TestCase):
 	    "type": "web"
         }
 
-
     def tearDown(self):
         self.teardown_application_record()
         pass

@@ -9,22 +9,22 @@ import random
 import uuid
 import re
 import json
-from common.logger import ConsoleLogger
 from api.resources.applications import Applications
 from collections import OrderedDict
 import socket
-
-logger = ConsoleLogger("INFO").getLogger()
+import logging
 
 class DockerFunctions():
 	def __init__(self, app, nodes, config, notifications):
 		self.config = config 
+		self.logger = logging.getLogger(__name__)
 		self.notifications = notifications 
 		self.application = Applications(self.config)
 		self.app = app 
 		self.nodes = nodes
 
 	def health_check(self, container):
+		self.logger.debug("Health check start for container {}".format(container))
 		#Check environment variables and endpoint
 		app_details = self.application.get(self.app)
 		all_containers = self.list_nodes()	
@@ -38,11 +38,16 @@ class DockerFunctions():
 					del(current_environment['PORT'])
 				except:
 					pass
+
 				if current_environment != app_details['environment']:
-					print "Container - {}: {} on {} has a different environment".format(container, r['Name'], node)
+					self.logger.info("Container - {}: {} on {} has a different environment".format(container, r['Name'], node))
 					return False
 				if not r['State']['Running']:
-					print "Container - {}: {} on {} is not running".format(container, r['Name'], node)
+					sys.exit(2)
+					self.logger.info("Container - {}: {} on {} is not running".format(container, r['Name'], node))
+					logs = c.logs(r['Id'], timestamps=True).split('\n')[-10:]
+					self.logger.info("Error output of container: {}".format(logs))
+					self.application.write_container_logs(self.app, logs)
 					return False
 
 				#If the container is not an app container then check the web endpoint
@@ -59,13 +64,16 @@ class DockerFunctions():
 	                        			socket.setdefaulttimeout(3)
 	                        			s.connect((node, int(port)))
 	                        			s.close()
+							self.logger.debug("Container {} port healthcheck successful".format(container))
 							return True
 	                			except Exception as e:
 	                        			time.sleep(2)
 
 					if success == 0:
+						self.logger.debug("Container {} port healthcheck failed".format(container))
 						return False
 
+		self.logger.debug("Container {} healthcheck successful")
 		return True
 
 	def list_nodes(self):
@@ -86,6 +94,7 @@ class DockerFunctions():
 		return output_nodes 
 
 	def start_instance(self,node):
+		self.logger.debug("Starting container on {} for app: {}".format(node, self.app))
 		app_details = self.application.get(self.app)
 		c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
 		docker_image = app_details['docker_image']
@@ -101,13 +110,18 @@ class DockerFunctions():
 				app_type = app_details['type']
 
 		if app_type == "web":
+			self.logger.info("Starting a web type container")
 			port = self.application.allocate_port()
        	       	 	r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
 			c.start(r['Id'], port_bindings={"{}/tcp".format(port): port})
 		else:
+			self.logger.info("Starting a app type container")
 			app_unique = uuid.uuid1()
        	         	r = c.create_container(docker_image, command, environment=dict( environment.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, app_unique))
 			c.start(r['Id'])
+
+
+		current_configuration = c.inspect_container(r['Id'])
 
 		#Put info on queue to update loadbalancer
 		self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls())) 
@@ -115,6 +129,7 @@ class DockerFunctions():
 		return True
 
 	def shutdown_instance(self,container):
+		self.logger.debug("Shutting down container {} for app: {}".format(container, self.app))
 		all_containers = self.list_nodes()	
 		for node in all_containers:
 			if container in all_containers[node]:

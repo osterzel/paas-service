@@ -52,10 +52,11 @@ def application_admin(app_name):
     events.reverse()
 
     hosts = g.redis_conn.smembers("hosts")
-    raw_app_logs = g.application.get_application_logs(app_name)
+    #raw_app_logs = g.application.get_application_logs(app_name)
+    raw_app_logs = g.application.get_container_logs(app_name)
 
-    for host in raw_app_logs:
-        raw_app_logs[host] = raw_app_logs[host].split("\n")
+    #for host in raw_app_logs:
+    #    raw_app_logs[host] = raw_app_logs[host].split("\n")
 
     return render_template('admin/application.html', app = app, apps = apps, events = events, app_logs = raw_app_logs, hosts = hosts )
 

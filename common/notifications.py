@@ -1,12 +1,11 @@
 import pika
 import os
+import logging
 
-from common.logger import ConsoleLogger
-
-logger = ConsoleLogger("INFO").getLogger()
 
 class Notifications(object):
     def __init__(self, config):
+	self.logger = logging.getLogger(__name__)
         self.connection = None
 	self.config = config
         self.parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas?heartbeat=5"))
@@ -17,7 +16,7 @@ class Notifications(object):
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
         #self.channel.exchange_declare(exchange='paas', type='topic')
-        logger.info("Connection established to queue-server")
+        self.logger.info("Connection established to queue-server")
 
     def callback(self, ch, method, properties, body):
         try:
@@ -26,7 +25,7 @@ class Notifications(object):
             print "Message is not in json format"
 
     def send_message(self, exchange, routing, body):
-	print "Sending message"
+	self.logger.debug("Sending message to exchange:{}".format(exchange))
         try:
                 self.channel.basic_publish(exchange=exchange, routing_key=routing, body=body)
         except:
@@ -34,7 +33,7 @@ class Notifications(object):
                         self.establish_connection(self.parameters)
                         self.channel.basic_publish(exchange=exchange, routing_key=routing, body=body)
                 except Exception as e:
-                        logger.error("Unable to send message to queue: {}".format(e.message))
+                        self.logger.error("Unable to send message to queue: {}".format(e.message))
 
     def queue_configuration(self, queue_name, exchange, routing):
 

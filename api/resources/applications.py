@@ -168,6 +168,14 @@ class Applications(object):
     def get_application_state(self, name):
 	return self.redis_conn.hget("app#{}".format(name), "state")
 
+    def write_container_logs(self, name, log_array):
+	for entry in log_array:
+		self.redis_conn.lpush("logs:{}".format(name), entry)
+		self.redis_conn.ltrim("logs:{}".format(name), 0, 150)
+
+    def get_container_logs(self, name):
+	return self.redis_conn.lrange("logs:{}".format(name), 0, -1)
+
     def set_application_logs(self, name, node, container_logs):
         self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
 

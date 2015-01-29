@@ -294,28 +294,8 @@
             <div class="bs-example">
               <ul class="nav nav-tabs" style="margin-bottom: 15px;">
                 {% set count = 1 %}
-		{% for host in app_logs %}
-			{% if count == 1 %}	
-				<li class="active"><a href="#{{ host }}" data-toggle="tab">{{ host }}</a></li>
-				{% set count = 0 %}	
-			{% else %}
-				<li><a href="#{{ host }}" data-toggle="tab">{{ host }}</a></li>
-			{% endif %}
-		{% endfor %}
-              </ul>
-              <div id="myTabContent" class="tab-content">
-		{% set count = 1 %}
-		{% for host in app_logs %}
-			{% if count == 1 %}
-			<div class="tab-pane fade active in" id="{{ host }}">
-			{% set count = 0 %}
-			{% else %}
-			<div class="tab-pane fade in" id="{{ host }}">
-			{% endif %}
-				{% for logrow in app_logs[host] %}
-				{{ logrow }}<br>
-				{% endfor %} 
-			</div>
+		{% for entry in app_logs %}
+			{{entry}}<br>
 		{% endfor %}
               </div>
             </div>

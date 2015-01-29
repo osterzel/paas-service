@@ -123,6 +123,7 @@ class MaxPerNodeScheduler(object):
 
             self.success = True
             return
+
         self.success = False
 
         return
