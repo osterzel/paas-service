@@ -134,7 +134,6 @@ class DockerFunctions():
 				c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")		
 				container_details = c.inspect_container(container)
 				if "web" in container_details['Name']:
-					print "Was a web container"
 					if container_details['HostConfig']['PortBindings']:
 						for key, value in container_details['HostConfig']['PortBindings'].iteritems():
 							port = value[0]['HostPort'] 
