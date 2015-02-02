@@ -33,17 +33,15 @@ class DockerFunctions():
 				c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
 				r = c.inspect_container(container)
 				current_environment = { entry.split("=")[0]: entry.split("=")[1] for entry in r["Config"]["Env"] }
-				del(current_environment['PATH'])
-				try:
+				if "PATH" in current_environment:
+					del(current_environment['PATH'])
+				if "PORT" in current_environment:
 					del(current_environment['PORT'])
-				except:
-					pass
 
 				if current_environment != app_details['environment']:
 					self.logger.info("Container - {}: {} on {} has a different environment".format(container, r['Name'], node))
 					return False
 				if not r['State']['Running']:
-					sys.exit(2)
 					self.logger.info("Container - {}: {} on {} is not running".format(container, r['Name'], node))
 					logs = c.logs(r['Id'], timestamps=True).split('\n')[-10:]
 					self.logger.info("Error output of container: {}".format(logs))
@@ -73,7 +71,7 @@ class DockerFunctions():
 						self.logger.debug("Container {} port healthcheck failed".format(container))
 						return False
 
-		self.logger.debug("Container {} healthcheck successful")
+		self.logger.info("Container {} healthcheck successful".format(container))
 		return True
 
 	def list_nodes(self):
@@ -136,8 +134,12 @@ class DockerFunctions():
 				c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")		
 				container_details = c.inspect_container(container)
 				if "web" in container_details['Name']:
-					port = container.split('_')[-1]
-					self.application.return_port(port)
+					print "Was a web container"
+					if container_details['HostConfig']['PortBindings']:
+						for key, value in container_details['HostConfig']['PortBindings'].iteritems():
+							port = value[0]['HostPort'] 
+							self.logger.debug("Returning port {}".format(port))
+							self.application.return_port(port)
 				c.kill(container)
 				c.remove_container(container)
 				#Put info on queue to update loadbalancer
