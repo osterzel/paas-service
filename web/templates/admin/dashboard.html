@@ -14,7 +14,7 @@
 		{% if count == 0 %}
 			<div class="row">
 		{% endif %}
-          		<div class="col-lg-2">
+          		<div class="col-lg-4">
 			   {% if app.state == "RUNNING" %}
 		            <div class="panel panel-success">
                            {% else %}
@@ -45,7 +45,7 @@
 
 		{% set count = count + 1 %}
 
-		{% if count == 6 %}
+		{% if count == 3 %}
 			</div>
 			{% set count = 0 %}
 		{% endif %}
