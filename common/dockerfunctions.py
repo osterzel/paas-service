@@ -43,9 +43,7 @@ class DockerFunctions():
 					return False
 				if not r['State']['Running']:
 					self.logger.info("Container - {}: {} on {} is not running".format(container, r['Name'], node))
-					logs = c.logs(r['Id'], timestamps=True).split('\n')[-10:]
 					self.logger.info("Error output of container: {}".format(logs))
-					self.application.write_container_logs(self.app, logs)
 					return False
 
 				#If the container is not an app container then check the web endpoint
