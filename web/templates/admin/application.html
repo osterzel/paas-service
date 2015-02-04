@@ -74,6 +74,17 @@
 			},
 			source: [ { value: "web", text: "Web Container - Exposes a http port" }, { value: "app", text: "App Container - No port exposed" } ]
 		  });
+		$('#containers').editable({
+			url: '/app/{{ app.name }}',
+			params: function(params) {
+				send_data = {};
+				key = params['name'];
+				value = params['value'];
+				send_data[key] = value;
+				console.log( send_data);
+				return JSON.stringify(send_data);
+			}
+		  });
 
                 {% for environment_entry in app.environment %}
                   $('#{{environment_entry}}').editable({
@@ -152,7 +163,6 @@
 
  </script>
 
-
         <div class="row">
           <div class="col-lg-12">
             <h1>Application: {{ app.name }}</h1>
@@ -187,6 +197,10 @@
 	    <tr>
 		<td>Application Type</td>
 		<td><a href="#" id="type" data-type="select" data-value="{{ app.type }}" data-pk="1" data-title="App type">{{ app.type }}</a></td>
+	    </tr>
+	    <tr>
+		<td>Number of containers</td>
+		<td><a href="#" id="type" data-type="select" data-value="{{ app.containers }}" data-pk="1" data-title="App Containers">{{ app.containers }}</a></td>
 	    </tr>
 			<tr>
 				<td>Containers</td>

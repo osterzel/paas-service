@@ -1,4 +1,4 @@
-from flask import g, Blueprint, render_template, jsonify
+from flask import g, Blueprint, render_template, jsonify, request
 import redis
 
 from os.path import dirname, realpath
@@ -26,13 +26,20 @@ def admin_dashboard():
     events = get_events()
     events.reverse()
 
+    search_string = None
+    if request.args.get('search'):
+	search_string = request.args.get('search')
+    else:
+	search_string = ""	
+
     apps = list()
     for app in list(g.application.get_all()['data']):
-        apps.append(g.application.get(app, containers = False))
+	if search_string in app:
+        	apps.append(g.application.get(app, containers = False))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
 
-    return render_template('admin/dashboard.html', events=events, apps = sorted_apps)
+    return render_template('admin/dashboard.html', events=events, apps = sorted_apps, search_string = search_string)
 
 @admin_web.route('/application/<app_name>')
 def application_admin(app_name):
