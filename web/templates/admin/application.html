@@ -74,7 +74,7 @@
 			},
 			source: [ { value: "web", text: "Web Container - Exposes a http port" }, { value: "app", text: "App Container - No port exposed" } ]
 		  });
-		$('#containers').editable({
+		$('#container_count').editable({
 			url: '/app/{{ app.name }}',
 			params: function(params) {
 				send_data = {};
@@ -199,8 +199,8 @@
 		<td><a href="#" id="type" data-type="select" data-value="{{ app.type }}" data-pk="1" data-title="App type">{{ app.type }}</a></td>
 	    </tr>
 	    <tr>
-		<td>Number of containers</td>
-		<td><a href="#" id="containers" data-type="select" data-value="{{ app.container_count }}" data-pk="1" data-title="App Containers">{{ app.containers_count }}</a></td>
+		<td>Number of containers<br></td>
+		<td><a href="#" id="container_count" data-type="text" data-value="{{ app.container_count }}" data-pk="1" data-title="App Containers">{{ app.containers_count }}</a></td>
 	    </tr>
 		<tr>
 			<td>Containers</td>
