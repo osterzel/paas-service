@@ -36,15 +36,12 @@ class ApplicationUpdater():
 
 		number_per_node = 1
 	 	number_of_containers = 1	
-		if app_details['container_count']:
+		if "container_count" in app_details:
 			try:
 				number_of_containers = float(app_details['container_count'])
 				number_per_node = number_of_containers / len(self.nodes) 
 			except ValueError:
 				pass
-
-		print number_per_node
-		print number_of_containers
 
 		try:
 			app_class = DockerFunctions(app, self.nodes, self.config, self.notifications)

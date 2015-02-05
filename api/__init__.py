@@ -68,7 +68,9 @@ class ApplicationRecord(restful.Resource):
         except Exception as e:
             restful.abort(400, message = e.message)
 
-        g.appupdater.process_app(name)
+	if request.args.get('synchronous'):
+        	g.appupdater.process_app(name)
+		application_response = g.applications.get(name)
 
         return application_response, 201
 
