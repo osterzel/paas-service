@@ -10,6 +10,7 @@ import re
 from .resources.applications import *
 from .resources.globalconfig import *
 from common.config import Config
+from common.appupdate import ApplicationUpdater
 
 
 api = Blueprint('api', __name__,
@@ -21,6 +22,7 @@ def rest_initialization():
     g.global_config = GlobalConfig(Config())
     g.applications = Applications(Config())
     g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
+    g.appupdater = ApplicationUpdater()
 
 @api.after_request
 def api_postprocessing(response):
@@ -65,6 +67,8 @@ class ApplicationRecord(restful.Resource):
             application_response = g.applications.update_application(name, application_request)
         except Exception as e:
             restful.abort(400, message = e.message)
+
+        g.appupdater.process_app(name)
 
         return application_response, 201
 

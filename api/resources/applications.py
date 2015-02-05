@@ -40,17 +40,17 @@ class Applications(object):
             raise Exception
 
         #Fetch all containers that match this application
-	if containers == True:
-	        containers = []
-	        for host in self.redis_conn.smembers("hosts"):
-			c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
-			find_containers = c.containers()
-			for container in find_containers:
-	                    if name in str(container['Names']) and "_web_" in str(container['Names']):
-				port = container['Names'][0].split('_')[-1]
-				containers.append("{}:{}".format(host, port))
+        if containers == True:
+            containers = []
+            for host in self.redis_conn.smembers("hosts"):
+                c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
+                find_containers = c.containers()
+                for container in find_containers:
+                        if name in str(container['Names']) and "_web_" in str(container['Names']):
+                            port = container['Names'][0].split('_')[-1]
+                            containers.append("{}:{}".format(host, port))
 
-	        app_details['containers'] = containers
+            app_details['containers'] = containers
 
         if not "urls" in app_details:
             try:
@@ -104,8 +104,6 @@ class Applications(object):
             data['environment'] = {}
             data['environment']['RESTART'] = int(1)
 
-        pipe.hset("app#{}".format(name), "error_count", 0)
-
         write_event("UPDATED APP", "App {}, restart called".format(name), name)
 
         if "memory_in_mb" in data:
@@ -122,9 +120,9 @@ class Applications(object):
 
         if "type" in data:
             pipe.hset("app#{}".format(name), "type", data['type'])
-	    pipe.hdel("app#{}".format(name), "app_type")
-	if "container_count" in data:
-	    pipe.hset("app#{}".format(name), "container_count", data['container_count'])
+        pipe.hdel("app#{}".format(name), "app_type")
+        if "container_count" in data:
+            pipe.hset("app#{}".format(name), "container_count", data['container_count'])
 
         if "environment" in data:
             if "PORT" in data["environment"].keys():
@@ -139,6 +137,7 @@ class Applications(object):
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
         write_event("UPDATED APP", "App {} was updated".format(name), name)
+
         self.publish_updates(name)
 
         return self.get(name)

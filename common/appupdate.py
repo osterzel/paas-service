@@ -22,6 +22,7 @@ class ApplicationUpdater():
 		self.logger = logging.getLogger(__name__)
 
 	def process_app(self, app, number_per_node = 1, number_of_containers = 1):
+		app_details = None
 		if not self.application.set_application_lock(app):
 			return False
 		else:
@@ -33,6 +34,18 @@ class ApplicationUpdater():
 				self.logger.debug("Docker Image not set, application skipped")
 				return False
 
+		number_per_node = 1
+	 	number_of_containers = 1	
+		if app_details['container_count']:
+			try:
+				number_of_containers = float(app_details['container_count'])
+				number_per_node = number_of_containers / len(self.nodes) 
+			except ValueError:
+				pass
+
+		print number_per_node
+		print number_of_containers
+
 		try:
 			app_class = DockerFunctions(app, self.nodes, self.config, self.notifications)
 			ss = Scheduler(app_class.start_instance, app_class.shutdown_instance, app_class.list_nodes, app_class.health_check, number_per_node)
@@ -43,10 +56,14 @@ class ApplicationUpdater():
 				output.append(event)
 			
 			self.logger.debug("Finished scheduler for app: {}".format(app))
+			print ss.success
 			if ss.success == True:
 				self.application.set_application_state(app, "RUNNING")
 			else:
-				self.application.set_application_state(app, "ERROR: {}".format(output))
+				if "started_instances" in output[-1]:
+					self.application.set_application_state(app, "RUNNING")
+				else:
+					self.application.set_application_state(app, "ERROR: {}".format(output))
 		except Exception as e:
 			self.logger.info("======= Scheduler Failed: {}".format(e.message))
 			self.application.set_application_state(app, e.message)
