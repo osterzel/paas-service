@@ -7,11 +7,18 @@ from flask.ext import restful
 import redis
 import re
 
+from os.path import dirname, realpath
+import sys
+
+sys.path.append(dirname(realpath(__file__)) + '../' )
+
 from .resources.applications import *
 from .resources.globalconfig import *
 from common.config import Config
-from common.appupdate import ApplicationUpdater
-
+try:
+	from common.appupdate import ApplicationUpdater
+except:
+	pass
 
 api = Blueprint('api', __name__,
                      template_folder='templates', static_folder='static')
@@ -22,7 +29,6 @@ def rest_initialization():
     g.global_config = GlobalConfig(Config())
     g.applications = Applications(Config())
     g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
-    g.appupdater = ApplicationUpdater()
 
 @api.after_request
 def api_postprocessing(response):
@@ -69,7 +75,8 @@ class ApplicationRecord(restful.Resource):
             restful.abort(400, message = e.message)
 
 	if request.args.get('synchronous'):
-        	g.appupdater.process_app(name)
+    		appupdater = ApplicationUpdater()
+        	appupdater.process_app(name)
 		application_response = g.applications.get(name)
 
         return application_response, 201
