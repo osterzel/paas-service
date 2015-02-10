@@ -1,7 +1,7 @@
 {% extends "admin/base.html" %}
 {% block body %}
 
-       
+
 
         <script>
 
@@ -13,7 +13,7 @@
    	          $('#enable').click(function() {
 	            $('#mainoptions .editable').editable('toggleDisabled');
 	            $('#environmentoptions .editable').editable('toggleDisabled');
-	          });    	
+	          });
 
   		  $('#docker_image').editable({
 			url: '/app/{{ app.name }}',
@@ -108,7 +108,7 @@
 			url: '/app/{{ app.name }}',
 			     validate: {
          			key: function(v) {if(v == '') return 'Required field!'}
-      		 	      }, 
+      		 	      },
 			params: function(params) {
 				console.log(params);
 				return params;
@@ -172,7 +172,7 @@
 	<div class="row">
           <div class="col-lg-6">
             <h2>Configuration</h2>
-	    <button id="enable" class="btn btn-default">enable/disable editing</button> 
+	    <button id="enable" class="btn btn-default">enable/disable editing</button>
             <div class="table-responsive">
               <table id="mainoptions" class="table table-bordered table-hover table-striped tablesorter">
                 <thead>
@@ -184,23 +184,23 @@
                 <tbody>
 			<tr>
 				<td>Docker Image</td>
-				<td><a href="#" id="docker_image" data-type="text" data-pk="1">{{ app.docker_image }}</a></td>
+				<td><a id="docker_image" data-type="text" data-pk="1">{{ app.docker_image }}</a></td>
 			</tr>
 			<tr>
 				<td>Docker Command</td>
-				<td><a href="#" id="command" data-type="text" data-pk="1">{{ app.command }}</a></td>
+				<td><a id="command" data-type="text" data-pk="1">{{ app.command }}</a></td>
 			</tr>
             <tr>
                 <td>URLS</td>
-                <td><a href="#" id="urls" data-type="textarea" data-pk="1">{{ app.urls }}</a></td>
+                <td><a id="urls" data-type="textarea" data-pk="1">{{ app.urls }}</a></td>
             </tr>
 	    <tr>
 		<td>Application Type</td>
-		<td><a href="#" id="type" data-type="select" data-value="{{ app.type }}" data-pk="1" data-title="App type">{{ app.type }}</a></td>
+		<td><a id="type" data-type="select" data-value="{{ app.type }}" data-pk="1" data-title="App type">{{ app.type }}</a></td>
 	    </tr>
 	    <tr>
 		<td>Number of containers<br></td>
-		<td><a href="#" id="container_count" data-type="text" data-value="{{ app.container_count }}" data-pk="1" data-title="App Containers">{{ app.containers_count }}</a></td>
+		<td><a id="container_count" data-type="text" data-value="{{ app.container_count }}" data-pk="1" data-title="App Containers">{{ app.containers_count }}</a></td>
 	    </tr>
 		<tr>
 			<td>Containers</td>
@@ -208,7 +208,7 @@
 		</tr>
 		<tr>
 			<td>Memory (MB)</td>
-			<td><a href="#" id="memory_in_mb" data-type="text" data-pk="1">{{ app.memory_in_mb }}</a></td>
+			<td><a id="memory_in_mb" data-type="text" data-pk="1">{{ app.memory_in_mb }}</a></td>
 		</tr>
 		<tr>
                 <td>Status</td>
@@ -224,7 +224,7 @@
 			</tr>
 			<tr>
 				<td>Application Actions</td>
-				<td><a href="#" id="restartbutton" onClick="return sendRestart();" class="btn btn-primary btn-large"><i class="icon-white icon-repeat"></i> Restart Application</a></td>
+				<td><a id="restartbutton" onClick="return sendRestart();" class="btn btn-primary btn-large"><i class="icon-white icon-repeat"></i> Restart Application</a></td>
 			</tr>
                 </tbody>
               </table>
@@ -253,15 +253,15 @@
 								    {% endif %}
 							        {% endif %}
 							</td>
-				            <td><a href="#" id="{{environment_entry}}" data-type="textarea" data-pk="1" style="word-wrap: break-word; word-break: break-word">{{ app.environment[environment_entry] }}</a></td>
+				            <td><a id="{{environment_entry}}" data-type="textarea" data-pk="1" style="word-wrap: break-word; word-break: break-word">{{ app.environment[environment_entry] }}</a></td>
 			            </tr>
 		            {% endfor %}
                 </tbody>
             </table>
 		    <table border=0 width=100% valign=top>
 			    <tr>
-				    <td>Key: <a href="#" class="newvariable" data-type="text" data-name="key" data-original-title="Key"></a></td>
-				    <td>Value: <a href="#" class="newvariable" data-type="text" data-name="value" data-original-title="Value"></a></td>
+				    <td>Key: <a class="newvariable" data-type="text" data-name="key" data-original-title="Key"></a></td>
+				    <td>Value: <a class="newvariable" data-type="text" data-name="value" data-original-title="Value"></a></td>
 				    <td><button id="save-btn" class="btn btn-primary">Save Variable</button></td>
 			    </tr>
 		    </table>
