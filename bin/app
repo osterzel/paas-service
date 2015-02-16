@@ -1,5 +1,6 @@
 #!/bin/bash
 
 python monitor.py &
+python logger.py &
 
-gunicorn --workers=4 server:app
+gunicorn --bind 0.0.0.0 --workers=8 server:app

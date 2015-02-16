@@ -1,13 +1,17 @@
-FROM ubuntu-debootstrap:1404
+FROM ubuntu:14.04
 
 ENV DEBIAN_FRONTEND noninteractive
 
-RUN apt-get install python-pip
-RUN pip install -r requirements.txt
+RUN apt-get update
+RUN apt-get install -fy python-pip
+ADD requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
 
 RUN mkdir -p /app/paas
-ADD * /app/paas/
+COPY . /app/paas/
+
+WORKDIR /app/paas
+
+EXPOSE 8000
 
 CMD /app/paas/bin/app
-
-
