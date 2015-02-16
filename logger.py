@@ -21,12 +21,14 @@ def container_host_logger(application, apps, host):
                         for app in apps:
                                 if app in line:
                                         node, log = line.split('|')
+					print "{} - {}".format(node, log)
                                         application.write_container_logs(app, [ log ])
 
 if __name__ == '__main__':
 	host = hosts[0]
 	threads = []
 	for host in hosts:
+		print host
 		t = threading.Thread(target=container_host_logger, args=(application, apps, host))
 		threads.append(t)
 		t.start()
