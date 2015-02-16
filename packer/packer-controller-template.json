@@ -1,0 +1,48 @@
+{
+  "variables": {
+    "headless": "false",
+    "output_dir": ".",
+    "source_ami": "ami-7742c900",
+    "version": "{{ env `VERSION_STRING` }}",
+    "NullHostName": "",
+    "NullIdentityFile": "",
+    "NullUser": "",
+    "NullPort": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "ami_name": "paas-controller-{{ user `version` }}-ubuntu14-{{timestamp}}",
+      "instance_type": "t2.small",
+      "region": "eu-west-1",
+      "source_ami": "{{ user `source_ami` }}",
+      "ssh_username": "ubuntu"
+    },
+    {
+      "type": "null",
+      "name": "test",
+      "host": "{{ user `NullHostName` }}",
+      "ssh_private_key_file": "{{ user `NullIdentityFile` }}",
+      "ssh_username": "{{ user `NullUser` }}",
+      "port": "{{ user `NullPort` }}"
+    }
+  ],
+  "provisioners": [
+    { "type": "file",
+      "source": "../",
+      "destination": "/opt/paas-controller/"
+    },
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/install.sh"
+      ],
+      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "override": {
+        "amazon-ebs": {
+          "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'"
+        }
+      }
+    }
+  ]
+}
