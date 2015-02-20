@@ -38,7 +38,10 @@ class ApplicationUpdater():
 	 	number_of_containers = 1	
 		if "container_count" in app_details:
 			try:
-				number_of_containers = float(app_details['container_count'])
+				if app_details['container_count'] == "all":
+					number_of_containers = len(self.nodes)
+				else:
+					number_of_containers = float(app_details['container_count'])
 				number_per_node = number_of_containers / len(self.nodes) 
 			except ValueError:
 				pass
@@ -53,7 +56,7 @@ class ApplicationUpdater():
 				output.append(event)
 			
 			self.logger.debug("Finished scheduler for app: {}".format(app))
-			print ss.success
+			print output
 			if ss.success == True:
 				self.application.set_application_state(app, "RUNNING")
 			else:
