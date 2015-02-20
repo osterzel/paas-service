@@ -99,8 +99,6 @@ class MaxPerNodeScheduler(object):
             return
 
         while double_expected_max_iterations > 0:
-            self.running_instances_by_node = self.list_running_by_node_func()
-            #print self.running_instances_by_node
             double_expected_max_iterations -= 1
             # Enough instances?
             if not self.__enough_instances(desired_qty):

@@ -56,14 +56,17 @@ class ApplicationUpdater():
 				output.append(event)
 			
 			self.logger.debug("Finished scheduler for app: {}".format(app))
-			print output
 			if ss.success == True:
 				self.application.set_application_state(app, "RUNNING")
 			else:
-				self.application.set_application_state(app, "ERROR: {}".format(output))
+				if "started" in output[-1]:
+					self.application.set_application_state(app, "RUNNING")
+				else:
+					self.application.set_application_state(app, "ERROR: {}".format(output))
 		except Exception as e:
 			self.logger.info("======= Scheduler Failed: {}".format(e.message))
 			self.application.set_application_state(app, e.message)
 
 		self.application.remove_application_lock(app)	
 		return True
+
