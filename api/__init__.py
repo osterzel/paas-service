@@ -104,9 +104,9 @@ paas_api.add_resource(ApplicationCollection, '/app', '/app/')
 paas_api.add_resource(ApplicationRecord, '/app/<string:name>')
 paas_api.add_resource(ApplicationUrls, '/app/urls', '/app/urls/')
 
-class GlobalCollection(restful.Resource):
+class HostCollection(restful.Resource):
     def get(self):
-        return g.global_config.get('all')
+        return g.global_config.get_hosts()
 
     def post(self):
         if not request.json:
@@ -114,32 +114,19 @@ class GlobalCollection(restful.Resource):
 
         global_request = request.json
         try:
-            global_response = g.global_config.update_environment(**global_request)
+            global_response = g.global_config.add_host(global_request)
         except:
             restful.abort(400, message = "Boo")
 
         return global_response, 201
 
-class GlobalRecord(restful.Resource):
-    def get(self, type):
+class HostRecord(restful.Resource):
+    def get(self, host):
         try:
-            return g.global_config.get(type)
+            return g.global_config.get_host(host)
         except:
             restful.abort(404)
 
-    def patch(self, type = None):
-        if not request.json:
-            restful.abort(400)
-
-        global_request = request.json
-
-        try:
-            global_response = g.global_config.update_environment(global_request)
-        except Exception as e:
-            restful.abort(400, message = e)
-
-        return global_response, 201
-
-paas_api.add_resource(GlobalCollection, '/global', '/global/')
-paas_api.add_resource(GlobalRecord, '/global/<string:type>')
+paas_api.add_resource(HostCollection, '/global/hosts', '/global/hosts/')
+paas_api.add_resource(HostRecord, '/global/hosts/<string:type>')
 

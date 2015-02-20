@@ -16,7 +16,7 @@ class ApplicationUpdater():
 	def __init__(self):
 		self.config = Config()
 		self.globalconfig = GlobalConfig(self.config)
-		self.nodes = self.globalconfig.get('hosts')
+		self.nodes = self.globalconfig.get_hosts()
 		self.notifications = Notifications(self.config)
 		self.application = Applications(self.config)
 		self.logger = logging.getLogger(__name__)

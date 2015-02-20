@@ -30,7 +30,7 @@ class TestServer(unittest.TestCase):
         response = self.flask_app.get("/app/")
         self.assertEqual(200, response.status_code)
 
-        response = self.flask_app.get("/global/")
+        response = self.flask_app.get("/global/hosts")
         self.assertEqual(200, response.status_code)
 
     def test_web_endpoint_codes(self):
