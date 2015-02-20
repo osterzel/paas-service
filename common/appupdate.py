@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 
-from scheduler.maxpernode import MaxPerNodeScheduler as Scheduler
-import time
-import sys
 import logging
 
-from api.resources.applications import Applications
-from api.resources.globalconfig import GlobalConfig
+from scheduler.maxpernode import MaxPerNodeScheduler as Scheduler
+from common.applications import Applications
+from common.globalconfig import GlobalConfig
 from common.notifications import Notifications
 from common.config import Config
 from common.dockerfunctions import DockerFunctions
+
 
 class ApplicationUpdater():
 

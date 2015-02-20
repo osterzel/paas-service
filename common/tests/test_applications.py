@@ -2,14 +2,12 @@ __author__ = 'oliver'
 
 import unittest
 import sys
-import flask
 
 sys.path.append( '../' )
 
-from mock import patch, MagicMock
+from mock import MagicMock
 
-import api
-from api.resources.applications import *
+from common.applications import *
 
 class TestApplication(unittest.TestCase):
 

@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 
-from scheduler.maxpernode import MaxPerNodeScheduler as Scheduler
-import docker
-import redis
 import time
-import sys
-import random
 import uuid
-import re
 import json
-from api.resources.applications import Applications
 from collections import OrderedDict
 import socket
 import logging
+
+import docker
+from common.applications import Applications
+
 
 class DockerFunctions():
 

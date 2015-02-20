@@ -2,7 +2,7 @@
   "variables": {
     "headless": "false",
     "output_dir": ".",
-    "source_ami": "ami-7742c900",
+    "source_ami": "ami-639d0914",
     "version": "{{ env `VERSION_STRING` }}",
     "NullHostName": "",
     "NullIdentityFile": "",
@@ -28,9 +28,18 @@
     }
   ],
   "provisioners": [
+    { "type": "shell",
+      "inline": [ "mkdir -p /opt/paas-controller" ],
+      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "override": {
+        "amazon-ebs": {
+          "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'"
+        }
+      }
+    },
     { "type": "file",
       "source": "../",
-      "destination": "/opt/paas-controller/"
+      "destination": "/opt/paas-controller"
     },
     {
       "type": "shell",

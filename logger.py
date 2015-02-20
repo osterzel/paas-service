@@ -1,10 +1,11 @@
+import threading
 
 from common.config import Config
-from api.resources.applications import Applications
-from api.resources.globalconfig import GlobalConfig
+
+from common.applications import Applications
+from common.globalconfig import GlobalConfig
 import requests
-import json
-import threading
+
 
 config = Config()
 application = Applications(config)

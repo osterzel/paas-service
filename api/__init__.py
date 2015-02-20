@@ -1,19 +1,17 @@
 __author__ = 'oliver'
 
 import hashlib
+import sys
 
 from flask import g, Blueprint, request
 from flask.ext import restful
-import redis
-import re
-
 from os.path import dirname, realpath
-import sys
+
 
 sys.path.append(dirname(realpath(__file__)) + '../' )
 
-from .resources.applications import *
-from .resources.globalconfig import *
+from common.applications import *
+from common.globalconfig import *
 from common.config import Config
 try:
 	from common.appupdate import ApplicationUpdater

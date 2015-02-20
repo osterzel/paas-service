@@ -1,15 +1,16 @@
-from flask import g, Blueprint, render_template, jsonify, request
-import redis
-
-from os.path import dirname, realpath
 import sys
+
+from flask import g, Blueprint, render_template, request
+import redis
+from os.path import dirname, realpath
+
 
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
-from common.paasevents import get_events, write_event
+from common.paasevents import get_events
 from common.config import Config
 
-from api.resources.applications import Applications
+from common.applications import Applications
 
 admin_web = Blueprint('admin_web', __name__,
                      template_folder='templates', static_folder='static')
