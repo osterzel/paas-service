@@ -52,7 +52,7 @@ def application_admin(app_name):
         apps.append(g.application.get(app, containers = False))
 
     try:
-        app = g.application.get(app_name)
+        app = g.application.get(app_name, containers = False)
     except Exception:
         app = {}
 
