@@ -71,9 +71,8 @@ def application_admin(app_name):
 @admin_web.route("/global", methods=["GET"])
 def admin_global():
     hosts = list(g.redis_conn.smembers("hosts"))
-    global_environment = g.redis_conn.hgetall("global:environment")
 
-    return render_template('admin/global.html', hosts = hosts, global_environment = global_environment)
+    return render_template('admin/global.html', hosts = hosts)
 
 
 @admin_web.route("/events/", methods=["GET"])
