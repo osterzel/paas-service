@@ -23,7 +23,6 @@ tests: venv
 	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server
 
 ami: packerinstall
-	tar czf repo.tgz --exclude='output' --exclude='.git' --exclude='venv' *
 	PATH=$(PATH); cd packer; pwd; packer build -only amazon-ebs packer-template.json
 
 packerinstall:
