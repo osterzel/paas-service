@@ -12,6 +12,6 @@ COPY . /app/paas/
 
 WORKDIR /app/paas
 
-EXPOSE 8000
+EXPOSE 80
 
 CMD /app/paas/bin/app
