@@ -21,6 +21,7 @@ class ApplicationUpdater():
 		self.logger = logging.getLogger(__name__)
 
 	def process_app(self, app, number_per_node = 1, number_of_containers = 1):
+		self.nodes = self.globalconfig.get_hosts()
 		app_details = None
 		if not self.application.set_application_lock(app):
 			return False
