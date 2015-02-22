@@ -3,4 +3,4 @@
 python monitor.py &
 python logger.py &
 
-gunicorn --bind 0.0.0.0:80 --workers=8 server:app
+gunicorn --bind 0.0.0.0 --workers=8 server:app
