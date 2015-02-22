@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "Starting the setup of a controller"
+
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 36A1D7869245C8950F966E92D8576A8BA88D21E9
 apt-add-repository -y ppa:chris-lea/redis-server
 echo "deb https://get.docker.com/ubuntu docker main" > /etc/apt/sources.list.d/docker.list
@@ -16,6 +18,7 @@ rabbitmqctl add_user paas paas
 rabbitmqctl set_permissions -p paas paas ".*" ".*" ".*"
 
 #Setup controller docker image
+git clone https://github.com/osterzel/paas-controller.git /opt/paas-controller
 cd /opt/paas-controller
 docker build -t paas-controller .
 

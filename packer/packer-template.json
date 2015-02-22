@@ -28,19 +28,6 @@
     }
   ],
   "provisioners": [
-    { "type": "shell",
-      "inline": [ "mkdir -p /opt/paas-controller" ],
-      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
-      "override": {
-        "amazon-ebs": {
-          "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'"
-        }
-      }
-    },
-    { "type": "file",
-      "source": "../",
-      "destination": "/opt/paas-controller"
-    },
     {
       "type": "shell",
       "scripts": [
