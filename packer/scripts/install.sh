@@ -9,6 +9,10 @@ echo "deb https://get.docker.com/ubuntu docker main" > /etc/apt/sources.list.d/d
 apt-get update
 apt-get -fy install lxc-docker redis-server rabbitmq-server
 
+#Change redis bind address
+sed -i s/"bind 127.0.0.1"/"#bind 127.0.0.1"/g /etc/redis/redis.conf
+service redis-server restart
+
 #Setup rabbitmq
 rabbitmq-plugins enable rabbitmq_management
 service rabbitmq-server restart
