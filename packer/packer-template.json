@@ -40,5 +40,14 @@
         }
       }
     }
+  ],
+  "post-processors" : [
+	{
+                "type": "vagrant",
+                "only": ["amazon-ebs"],
+                "compression_level" : 1,
+                "output": "paas-controller-{{timestamp}}.box",
+                "keep_input_artifact": true
+	}
   ]
 }

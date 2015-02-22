@@ -11,7 +11,7 @@ config = Config()
 application = Applications(config)
 globalconfig = GlobalConfig(config)
 
-hosts = globalconfig.get('hosts')
+hosts = globalconfig.get_hosts()
 apps = application.get_all()['data']
 
 def container_host_logger(application, apps, host):
