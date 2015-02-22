@@ -22,4 +22,4 @@ git clone https://github.com/osterzel/paas-controller.git /opt/paas-controller
 cd /opt/paas-controller
 docker build -t paas-controller .
 
-docker create --restart=always -e RABBITMQ_URL="amqp://paas:paas@172.17.42.1/paas" -p 80:8000 paas-controller
+docker create --restart=always -e RABBITMQ_URI="amqp://paas:paas@172.17.42.1:5672/paas" -e REDIS_HOST="172.17.42.1" -p 80:8000 paas-controller
