@@ -29,14 +29,14 @@ def admin_dashboard():
 
     search_string = None
     if request.args.get('search'):
-	search_string = request.args.get('search')
+        search_string = request.args.get('search')
     else:
-	search_string = ""	
+        search_string = ""
 
     apps = list()
     for app in list(g.application.get_all()['data']):
-	if search_string in app:
-        	apps.append(g.application.get(app, containers = False))
+        if search_string in app:
+            apps.append(g.application.get(app, containers = False))
 
     sorted_apps = sorted(apps, key=lambda k: k['name'])
 
