@@ -78,6 +78,30 @@ This would create a new application and return the current app details:
    }
 ```
 
+####Update an application
+```
+curl -X PATCH -H 'Content-type: application/json' servername/app/<app_name> -d '{ "environment": { "SLUG_URL": "http://sluglocaltion.tgz" }, "memory_in_mb": 128 }'
+```
+
+This would return an up to date json document of the application
+```
+{  
+   "name": "my-application-name", 
+   "state": "virgin", 
+   "command": "", 
+   "memory_in_mb": 512, 
+   "ssl_certificate_name": "", 
+   "ssl": "false", 
+   "port": "55850", 
+   "created_at": "2014-11-26T10:26:08.140731", 
+   "environment": {}, 
+   "docker_image": "", 
+   "global_environment": { 
+            "LOGGING_HOST": "a-global-host"
+            }
+   }
+```
+
 ####Delete an application
 
 ```
