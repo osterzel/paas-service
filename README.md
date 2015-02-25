@@ -89,7 +89,7 @@ This would return an up to date json document of the application
    "name": "my-application-name", 
    "state": "virgin", 
    "command": "", 
-   "memory_in_mb": 512, 
+   "memory_in_mb": 128, 
    "ssl_certificate_name": "", 
    "ssl": "false", 
    "port": "55850", 
@@ -97,7 +97,8 @@ This would return an up to date json document of the application
    "environment": {}, 
    "docker_image": "", 
    "global_environment": { 
-            "LOGGING_HOST": "a-global-host"
+            "LOGGING_HOST": "a-global-host",
+	    "SLUG_URL": "http://sluglocation.tgz"
             }
    }
 ```
