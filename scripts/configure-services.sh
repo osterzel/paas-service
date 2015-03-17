@@ -1,5 +1,7 @@
 #!/bin/bash
 
+apt-get install -fy redis-tools
+
 CONTROLLER=`docker ps | grep controller | awk '{print $1}'`
 ROUTER=`docker ps | grep router | awk '{print $1}'`
 REDIS=`docker ps | grep redi | awk '{print $1}'`
@@ -14,6 +16,7 @@ sudo docker build -t paas-router .
 if [ "$REDIS" == "" ]
 then
 	docker run -p 6379:6379 --name redis -d redis
+	redis-cli sadd hosts 192.168.0.240
 fi
 
 if [ "$RABBITMQ" == "" ]
@@ -36,3 +39,4 @@ docker run -d -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -p 80:8
 
 
 #Setup test slug
+

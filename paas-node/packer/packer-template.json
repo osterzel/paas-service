@@ -1,0 +1,52 @@
+{
+  "variables": {
+    "headless": "false",
+    "output_dir": ".",
+    "source_ami": "ami-639d0914",
+    "version": "{{ env `VERSION_STRING` }}",
+    "NullHostName": "",
+    "NullIdentityFile": "",
+    "NullUser": "",
+    "NullPort": ""
+  },
+  "builders": [
+    {
+      "type": "amazon-ebs",
+      "ami_name": "paas-node-{{ user `version` }}-ubuntu14-{{timestamp}}",
+      "instance_type": "t2.small",
+      "region": "eu-west-1",
+      "source_ami": "{{ user `source_ami` }}",
+      "ssh_username": "ubuntu"
+    },
+    {
+      "type": "null",
+      "name": "test",
+      "host": "{{ user `NullHostName` }}",
+      "ssh_private_key_file": "{{ user `NullIdentityFile` }}",
+      "ssh_username": "{{ user `NullUser` }}",
+      "port": "{{ user `NullPort` }}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "scripts": [
+        "scripts/install.sh"
+      ],
+      "execute_command": "echo 'vagrant' | {{ .Vars }} sudo -E -S sh '{{ .Path }}'",
+      "override": {
+        "amazon-ebs": {
+          "execute_command": "{{ .Vars }} sudo -E bash '{{ .Path }}'"
+        }
+      }
+    }
+  ],
+  "post-processors": [
+        {
+           "type": "vagrant",
+           "compression_level": 1,
+           "keep_input_artifact": false,
+           "only": [ "amazon-ebs" ]
+        }
+  ]
+}

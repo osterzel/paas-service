@@ -21,6 +21,6 @@ Vagrant.configure("2") do |config|
     ]
   end
 
-  config.vm.provision "shell", path: "scripts/docker_install.sh"
+  config.vm.provision "shell", path: "paas-node/packer/scripts/install.sh"
 
 end
