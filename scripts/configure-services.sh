@@ -26,11 +26,13 @@ if [ "$CONTROLLER" != "" ]
 then
 	docker rm -f $CONTROLLER
 fi
-docker run -d -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -e REDIS_HOST="192.168.0.240" paas-controller
+docker run -d -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -e REDIS_HOST="192.168.0.240" -p 8000:8000 paas-controller
 
 if [ "$ROUTER" != "" ]
 then
 	docker rm -f $ROUTER
 fi
-docker run -d -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" paas-router
+docker run -d -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -p 80:80 paas-router
 
+
+#Setup test slug
