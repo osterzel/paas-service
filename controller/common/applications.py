@@ -78,7 +78,7 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 512, "command": "", "urls": name, "error_count": 0, "container_count": "1" })
+                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 128, "command": "", "urls": name, "error_count": 0, "container_count": "1" })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
