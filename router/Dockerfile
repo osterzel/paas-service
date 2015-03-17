@@ -57,7 +57,7 @@ WORKDIR /app
 ENV PATH /app:$PATH
 
 # Define default command.
-CMD ["run.sh"]
+CMD ["/bin/app"]
 
 # Expose ports.
 EXPOSE 80
