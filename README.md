@@ -5,6 +5,8 @@
 - controller ( this is the main controller which holds the api, monitor and logger)
 - router ( this is the routing engine for the paas )
 
+Documentation for each component can be found under the individual folders
+
 #Glue
 
 There are 2 pieces that drive the paas, a redis server for maintaining config and
