@@ -1,17 +1,17 @@
 {% extends "admin/base.html" %}
 {% block body %}
 
-        <div class="row">
+    <div class="row">
           <div class="col-lg-8">
             <h1>Dashboard <small>Statistics Overview</small></h1>
           </div>
 	  <div class="col-lg-4">
 		<br>
-		<form action="", method="GET">
+		<form id="searchForm" method="GET">
 			Search: <input type="text" name="search" value="{{ search_string }}">
 		</form>
 	  </div>
-        </div><!-- /.row -->
+    </div><!-- /.row -->
 
 	{% set count = 0 %}
 

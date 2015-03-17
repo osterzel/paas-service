@@ -7,7 +7,7 @@ The PAAS Controller is a simplistic controller for managing a microservice clust
 
 #Requirements
 - Python 2.7
-- Redis for persistence store
+- Redis for persistence store (if you don't want to install redis you can just run it in docker ```docker run -p 6379:6379 --name my-redis -d redis```)
 
 #Environment variables
 
@@ -17,10 +17,12 @@ The PAAS Controller is a simplistic controller for managing a microservice clust
 
 The best way to run this is under a virtualenv
 
-- virtualenv controller
-- source controller/bin/activate
-- pip install -r requirements.txt
-- python server.py
+    virtualenv controller
+    source controller/bin/activate
+    pip install -r requirements.txt
+    python server.py
+    
+Access the app at http://localhost:8000/web
 
 ## The web interface
 
