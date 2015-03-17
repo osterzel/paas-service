@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cd /app
+
+echo "Starting Nginx"
+
+/usr/sbin/nginx
+echo `cat /var/log/nginx/error.log`
+
+echo "Starting router engine"
+
+echo "RabbitMQ URI: $RABBITMQ_URI"
+
+python server.py

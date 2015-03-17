@@ -98,8 +98,6 @@ class paasController():
 		pass
 
 if __name__ == '__main__':
-	parser = argparse.Parser()
-	parser.add_argument('
 	paas = paasController()
 	paas.add_controller("localhost", "http://127.0.0.1:8000")
 	paas.list_controllers()

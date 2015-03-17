@@ -9,7 +9,7 @@ ifeq ($(OS), Linux)
         PACKER_URL = "https://dl.bintray.com/mitchellh/packer/packer_0.7.5_linux_amd64.zip"
 endif
 
-.PHONY: clean tests
+.PHONY: clean test
 
 venv: venv/bin/activate 
 venv/bin/activate: requirements.txt
@@ -17,10 +17,10 @@ venv/bin/activate: requirements.txt
 	. venv/bin/activate; pip install -Uqr requirements.txt
 	touch venv/bin/activate
 
-tests: venv
+test: venv
 	venv/bin/pip install -Uqr requirements-tests.txt	
 	test -d target || mkdir target
-	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server
+	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server,client
 
 ami: packerinstall
 	PATH=$(PATH); cd packer; pwd; packer build -only amazon-ebs packer-template.json

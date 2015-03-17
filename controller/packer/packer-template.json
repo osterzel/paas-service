@@ -2,7 +2,7 @@
   "variables": {
     "headless": "false",
     "output_dir": ".",
-    "source_ami": "ami-639d0914",
+    "source_ami": "ami-3532af42",
     "version": "{{ env `VERSION_STRING` }}",
     "NullHostName": "",
     "NullIdentityFile": "",

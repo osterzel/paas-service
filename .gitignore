@@ -6,4 +6,3 @@ paas-controller-venv
 *.swp
 venv
 output
-controller
