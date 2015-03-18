@@ -40,7 +40,7 @@ class TestApplication(unittest.TestCase):
         output = self.application.create_application(self.create_record)
 
         self.assertEqual(self.test_application, output['name'])
-        self.assertEqual(512, output['memory_in_mb'])
+        self.assertEqual(128, output['memory_in_mb'])
         self.assertEqual("testapplication", output['urls'])
 
         output = self.application.get(self.test_application)

@@ -46,7 +46,7 @@ class Applications(object):
                 c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
                 find_containers = c.containers()
                 for container in find_containers:
-                        if name in str(container['Names']) and "_web_" in str(container['Names']):
+                        if name in str(container['Names']) and any(match in str(container['Names']) for match in [ '_web_', '_weburlcheck_' ]):
                             port = container['Names'][0].split('_')[-1]
                             containers.append("{}:{}".format(host, port))
 
