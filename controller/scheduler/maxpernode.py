@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import random
+import logging
 
 
 class CapacityError(Exception):
@@ -8,7 +9,7 @@ class CapacityError(Exception):
 
 class MaxPerNodeScheduler(object):
     """A simple node aware scheduler."""
-    def __init__(self, startup_func, shutdown_func, list_running_by_node_func, is_healthy_func, max_per_node=1):
+    def __init__(self, startup_func, shutdown_func, list_running_by_node_func, is_healthy_func, max_per_node=1, rolling_restart = True):
         """
         Args:
             startup_func (function): A callback function for container startup that takes an argument of a node to start on and returns True on success and False on failure.
@@ -27,6 +28,8 @@ class MaxPerNodeScheduler(object):
         self.changed = False
         self.success = False
         self.max_per_node = max_per_node
+        self.rolling_restart = rolling_restart
+        self.logger = logging.getLogger(__name__)
 
     def __enough_instances(self, desired_qty):
         if len([i for ni in self.running_instances_by_node.values() for i in ni]) < desired_qty:
@@ -54,6 +57,11 @@ class MaxPerNodeScheduler(object):
         try:
             bad_instance = healthcheck_nodes_with_exceptions_as_False().next()
             self.shutdown_func(bad_instance)
+            self.logger.info("Should be checking for a rolling restart {}".format(self.rolling_restart))
+            if self.rolling_restart == True:
+                self.logger.info("Starting a new container")
+                chosen_node = sorted(self.running_instances_by_node.items(), key=lambda (k, v): len(v))[0][0]
+                self.startup_func(chosen_node)
             self.changed = True
             return False
         except StopIteration:

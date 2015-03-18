@@ -6,6 +6,7 @@ import json
 from collections import OrderedDict
 import socket
 import logging
+import sys
 
 import docker
 from common.applications import Applications
@@ -122,11 +123,12 @@ class DockerFunctions():
 
         #Put info on queue to update loadbalancer
         self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))
+	sys.sleep(5)
 
         return True
 
-    def shutdown_instance(self,container):
-        self.logger.debug("Shutting down container {} for app: {}".format(container, self.app))
+    def shutdown_instance(self,container, restart=False):
+        self.logger.info("Shutting down container {} for app: {}".format(container, self.app))
         all_containers = self.list_nodes()
         for node in all_containers:
             if container in all_containers[node]:
