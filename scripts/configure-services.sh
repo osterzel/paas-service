@@ -16,6 +16,7 @@ sudo docker build -t paas-router .
 if [ "$REDIS" == "" ]
 then
 	docker run -p 6379:6379 --name redis -d redis
+	sleep 2
 	redis-cli sadd hosts 192.168.0.240
 fi
 
