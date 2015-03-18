@@ -72,7 +72,7 @@
 				console.log( send_data);
 				return JSON.stringify(send_data);
 			},
-			source: [ { value: "web", text: "Web Container - Exposes a http port" }, { value: "app", text: "App Container - No port exposed" } ]
+			source: [ { value: "web", text: "Web Container - Port check only" }, { "value": "weburlcheck", text: "Web Container - Healthcheck on /internal/healthcheck" }, { value: "app", text: "App Container - No port exposed" } ]
 		  });
 		$('#container_count').editable({
 			url: '/app/{{ app.name }}',

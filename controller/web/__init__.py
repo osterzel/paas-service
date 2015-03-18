@@ -75,7 +75,6 @@ def admin_global():
 
     return render_template('admin/global.html', hosts = hosts)
 
-
 @admin_web.route("/events/", methods=["GET"])
 @admin_web.route("/events", methods=["GET"])
 def admin_logs():

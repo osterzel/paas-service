@@ -7,6 +7,7 @@ from collections import OrderedDict
 import socket
 import logging
 import sys
+import requests
 
 import docker
 from common.applications import Applications
@@ -49,6 +50,29 @@ class DockerFunctions():
                     return False
 
                 #If the container is not an app container then check the web endpoint
+                if "weburlcheck" in r['Name']:
+                    port = r["Config"]["ExposedPorts"].iterkeys().next().split('/')[0]
+                    success = 0
+                    for count in range(60):
+                        r = c.inspect_container(container)
+                        if r['State']['Running'] == False:
+                            return False
+                        try:
+                            healthcheck_url = 'http://' + node + ':' + port + '/internal/healthcheck' 
+                            response = requests.get(healthcheck_url)
+                            if response.status_code == 200:
+                                self.logger.debug("Container {} healthcheck url successful".format(container))
+                                return True
+                            else: 
+                                time.sleep(2)
+                        except:
+                            time.sleep(2)
+
+                    if success == 0:
+                        self.logger.debug("Container {} healthcheck url failed".format(container))
+                        return False
+
+
                 if "web" in r['Name']:
                     port = r["Config"]["ExposedPorts"].iterkeys().next().split('/')[0]
                     s = socket.socket()
@@ -107,7 +131,7 @@ class DockerFunctions():
             if "type" in app_details:
                 app_type = app_details['type']
 
-        if app_type == "web":
+        if app_type == "web" or app_type == "weburlcheck":
             self.logger.info("Starting a web type container")
             port = self.application.allocate_port()
             r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
@@ -118,12 +142,10 @@ class DockerFunctions():
             r = c.create_container(docker_image, command, environment=dict( environment.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, app_unique))
             c.start(r['Id'])
 
-
         current_configuration = c.inspect_container(r['Id'])
 
         #Put info on queue to update loadbalancer
         self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))
-	sys.sleep(5)
 
         return True
 
