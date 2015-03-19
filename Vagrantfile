@@ -1,6 +1,5 @@
 box        = 'trusty64'
-url        = 'https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-clou
-dimg-amd64-vagrant-disk1.box'
+url        = 'https://cloud-images.ubuntu.com/vagrant/trusty/current/trusty-server-cloudimg-amd64-vagrant-disk1.box'
 hostname   = 'paas'
 domain     = 'testing.com'
 ip_address = '192.168.0.240'
