@@ -90,9 +90,18 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(output['type'], self.update_record['type'])
 
 
+    def test_application_restart(self):
+	output = self.setup_application_record()
 
+	self.assertEqual(output['name'], "testapplication")
 
+	output = self.application.update_application(self.test_application, { 'restart': 'true' })
+	self.assertEqual(output['environment']['RESTART'], '1')
 
+	output = self.application.update_application(self.test_application, { 'restart': 'true' })
+	self.assertEqual(output['environment']['RESTART'], '2')
+
+	
 
 
 

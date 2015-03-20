@@ -100,9 +100,9 @@ class Applications(object):
             except KeyError:
                 new_counter = 1
 
-        if not "environment" in data:
-            data['environment'] = {}
-            data['environment']['RESTART'] = int(1)
+            if not "environment" in data:
+                data['environment'] = {}
+                data['environment']['RESTART'] = new_counter
 
         write_event("UPDATED APP", "App {}, restart called".format(name), name)
 
