@@ -1,6 +1,13 @@
 
-test:
-	echo "Global tests shoud go here"	
+test: venv
+	venv/bin/pip install -Uqr requirements-test.txt
+	source venv/bin/activate; behave
+
+venv: venv/bin/activate
+venv/bin/activate: requirements.txt
+	test -d venv || virtualenv venv
+	. venv/bin/activate; pip install -Uqr requirements.txt
+	touch venv/bin/activate
 
 vagrant:
 	vagrant up
