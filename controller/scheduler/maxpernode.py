@@ -56,12 +56,12 @@ class MaxPerNodeScheduler(object):
                         yield instance
         try:
             bad_instance = healthcheck_nodes_with_exceptions_as_False().next()
-            self.shutdown_func(bad_instance)
             self.logger.info("Should be checking for a rolling restart {}".format(self.rolling_restart))
             if self.rolling_restart == True:
                 self.logger.info("Starting a new container")
                 chosen_node = sorted(self.running_instances_by_node.items(), key=lambda (k, v): len(v))[0][0]
                 self.startup_func(chosen_node)
+            self.shutdown_func(bad_instance)
             self.changed = True
             return False
         except StopIteration:

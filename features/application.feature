@@ -12,8 +12,8 @@ Feature: application lifecycle
 
     Scenario: change application url 
        Given I have a paas api service
-       When I set attribute "url" to "testapp.domain.com" for application "testapp"
-       Then I get an application json document for "testapp" with attribute "url" and value "testapp.domain.com"
+       When I set attribute "urls" to "testapp.domain.com" for application "testapp"
+       Then I get an application json document for "testapp" with attribute "urls" and value "testapp.domain.com"
 
     Scenario: delete an application
 	Given I have a paas api service
