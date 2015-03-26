@@ -57,6 +57,7 @@ def step_impl(context, application):
 def step_impl(context, application, state):
 	count = 0
 	max_count = 10
+	success = 0
 	while True:
 		context.response = context.web_requests.get(context.api_url + "/app/{}".format(application))
 		data = context.response.json()

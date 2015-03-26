@@ -53,7 +53,7 @@ Feature: application lifecycle
         And I am able to access the site on "testapp.domain.com"
         And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "myvalue"
 
-#    Scenario: delete an application
-#	     Given I have a paas api service
-#	     When I delete an application "testapp"	
-#	     Then I get a message confirming the application is removed
+    Scenario: delete an application
+	     Given I have a paas api service
+	     When I delete an application "testapp"	
+	     Then I get a message confirming the application is removed
