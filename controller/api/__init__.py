@@ -83,7 +83,6 @@ class ApplicationRecord(restful.Resource):
 
         return g.applications.delete_application(name)
 
-
 class ApplicationUrls(restful.Resource):
 
     def get(self):

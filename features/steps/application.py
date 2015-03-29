@@ -56,7 +56,7 @@ def step_impl(context, application):
 @then('I wait for application "{application}" to reach state "{state}"')
 def step_impl(context, application, state):
 	count = 0
-	max_count = 10
+	max_count = 30
 	success = 0
 	while True:
 		context.response = context.web_requests.get(context.api_url + "/app/{}".format(application))

@@ -32,12 +32,24 @@ Feature: application lifecycle
         Then I wait for application "testapp" to reach state "RUNNING"
         And I am able to access the site on "testapp.domain.com"
 
+    Scenario: set application memory 
+        Given I have a paas api service
+        When I set variable "memory_in_mb" to "16" for application "testapp"
+        Then I get an application json document for "testapp" with variable "memory_in_mb" and value "16"
+
     Scenario: add additional container
         Given I have a paas api service
-        When I set variable "container_count" to "2" for application "testapp"
+        When I set variable "container_count" to "3" for application "testapp"
         Then I wait for application "testapp" to reach state "RUNNING"
         And I am able to access the site on "testapp.domain.com"
-        And I get an application json document for "testapp" with variable "container_count" and value "2"
+        And I get an application json document for "testapp" with variable "container_count" and value "3"
+
+    Scenario: add environment variables
+        Given I have a paas api service
+        When I set environment variable "TEST_VARIABLE" to "test_with_3_containers" for application "testapp"
+        Then I wait for application "testapp" to reach state "RUNNING"
+        And I am able to access the site on "testapp.domain.com"
+        And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "test_with_3_containers"
 
     Scenario: decrease containers to 1
         Given I have a paas api service
@@ -48,10 +60,10 @@ Feature: application lifecycle
 
     Scenario: add environment variables
         Given I have a paas api service
-        When I set environment variable "TEST_VARIABLE" to "myvalue" for application "testapp"
+        When I set environment variable "TEST_VARIABLE" to "test_with_1_containers" for application "testapp"
         Then I wait for application "testapp" to reach state "RUNNING"
         And I am able to access the site on "testapp.domain.com"
-        And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "myvalue"
+        And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "test_with_1_containers"
 
     Scenario: delete an application
 	     Given I have a paas api service

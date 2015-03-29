@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import sys
 
 from scheduler.maxpernode import MaxPerNodeScheduler as Scheduler
 from common.applications import Applications
@@ -54,15 +55,14 @@ class ApplicationUpdater():
 			for event in ss.run(number_of_containers):
 				self.logger.debug("Scheduler Event: {}".format(event))
 				output.append(event)
+
+			self.logger.debug(output)
 			
 			self.logger.debug("Finished scheduler for app: {}".format(app))
 			if ss.success == True:
 				self.application.set_application_state(app, "RUNNING")
 			else:
-				if "started" in output[-1]:
-					self.application.set_application_state(app, "RUNNING")
-				else:
-					self.application.set_application_state(app, "ERROR: {}".format(output))
+				self.application.set_application_state(app, "ERROR: {}".format(output))
 		except Exception as e:
 			self.logger.info("======= Scheduler Failed: {}".format(e.message))
 			self.application.set_application_state(app, e.message)

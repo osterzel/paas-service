@@ -165,7 +165,7 @@ class DockerFunctions():
                             port = value[0]['HostPort']
                             self.logger.debug("Returning port {}".format(port))
                             self.application.return_port(port)
-                c.kill(container)
+                c.stop(container)
                 c.remove_container(container)
                 #Put info on queue to update loadbalancer
                 self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))

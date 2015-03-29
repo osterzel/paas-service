@@ -35,7 +35,7 @@ class Applications(object):
             app_details["global_environment"] = self.redis_conn.hgetall("global:environment")
 
         if "memory_in_mb" in app_details:
-            app_details["memory_in_mb"] = int(app_details["memory_in_mb"])
+            app_details["memory_in_mb"] = str(app_details["memory_in_mb"])
         if not app_details:
             raise Exception
 
@@ -78,7 +78,7 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": 128, "command": "", "urls": name, "error_count": 0, "container_count": "1" })
+                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": "128", "command": "", "urls": name, "error_count": 0, "container_count": "1" })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
