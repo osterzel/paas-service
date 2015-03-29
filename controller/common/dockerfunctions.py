@@ -147,8 +147,10 @@ class DockerFunctions():
         #Do healthcheck
         if self.health_check(r['Id']):
                 #Put info on queue to update loadbalancer
+                #TODO - actually make the update of the loadbalancer synchronous
                 self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))
-                time.sleep(2)
+                if app_type == web:
+                    time.sleep(5)
                 self.logger.info("Completed starting container")
                 return True
         else:

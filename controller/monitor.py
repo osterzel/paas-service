@@ -16,6 +16,7 @@ def process_applications():
 	#Remove verbose requests logging
 
 	logging.getLogger("requests").setLevel(logging.WARNING)
+	logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 	logger = logging.getLogger(__name__)
 	redis_conn = redis.StrictRedis(config.redis_host)
