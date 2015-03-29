@@ -144,13 +144,16 @@ class DockerFunctions():
 
         current_configuration = c.inspect_container(r['Id'])
 
-	#Do healthcheck
-	if self.health_check(r['Id']):
-        	#Put info on queue to update loadbalancer
-        	self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))
-        	return True
-	else:
-		return False
+        #Do healthcheck
+        if self.health_check(r['Id']):
+                #Put info on queue to update loadbalancer
+                self.notifications.send_message("paas", "docker_container_updates", json.dumps(self.application.get_all_urls()))
+                time.sleep(2)
+                self.logger.info("Completed starting container")
+                return True
+        else:
+            self.logger.info("Failed starting container")
+            return False
 
     def shutdown_instance(self,container, restart=False):
         self.logger.info("Shutting down container {} for app: {}".format(container, self.app))
