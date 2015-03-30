@@ -1,3 +1,5 @@
+version = dev
+
 
 localtest: vagrant test
 
@@ -10,6 +12,14 @@ venv/bin/activate: requirements.txt
 	test -d venv || virtualenv venv
 	. venv/bin/activate; pip install -Uqr requirements.txt
 	touch venv/bin/activate
+
+docker: controller-docker router-docker
+
+controller-docker:
+	docker build -t paas-controller:$(version) controller/.
+
+router-docker:
+	docker build -t paas-router:$(version) router/.
 
 vagrant:
 	vagrant up
