@@ -5,7 +5,7 @@ localtest: vagrant test
 
 test: venv
 	venv/bin/pip install -Uqr requirements-test.txt
-	source venv/bin/activate; behave
+	. venv/bin/activate; behave
 
 venv: venv/bin/activate
 venv/bin/activate: requirements.txt
