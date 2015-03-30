@@ -62,7 +62,7 @@ Feature: application lifecycle
         Given I have a paas api service
         When I set environment variable "TEST_VARIABLE" to "test_with_1_containers" for application "testapp"
         Then I wait for application "testapp" to reach state "RUNNING"
-        And I am able to access the site on "testapp.domain.com"
+        And I am eventually able to access the site on "testapp.domain.com"
         And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "test_with_1_containers"
 
     Scenario: delete an application

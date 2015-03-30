@@ -77,4 +77,18 @@ def step_impl(context, url):
 	response = context.web_requests.get(context.router_url, headers=headers)	
 	assert_that(response.status_code, equal_to(200), context.response.text)
 
+@then('I am eventually able to access the site on "{url}"')
+def step_impl(context, url):
+	headers = { "Host": "{}".format(url) }
+        count = 0
+	while True:
+	    response = context.web_requests.get(context.router_url, headers=headers)	
+            if response.status_code != 200:
+               time.sleep(2)
+               count += 1
+               continue
+            if count > 10:
+               break
+
+	assert_that(response.status_code, equal_to(200), context.response.text)
 
