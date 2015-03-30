@@ -21,6 +21,10 @@ controller-docker:
 router-docker:
 	docker build -t paas-router:$(version) router/.
 
+save-docker: controller-docker router-docker
+	docker save -o controller-$(version).tgz paas-controller:$(version)
+	docker save -o router-$(version).tgz paas-router:$(version)
+
 vagrant:
 	vagrant up
 	vagrant ssh -c 'sudo /services/paas-node/packer/scripts/install.sh'
