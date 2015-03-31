@@ -7,6 +7,10 @@ test: venv
 	venv/bin/pip install -Uqr requirements-test.txt
 	. venv/bin/activate; behave
 
+unittest:
+	cd controller; make test
+	cd router; make test
+
 venv: venv/bin/activate
 venv/bin/activate: requirements.txt
 	test -d venv || virtualenv venv

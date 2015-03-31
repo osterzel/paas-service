@@ -6,18 +6,17 @@ import sys
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
 from datetime import datetime
-import redis
 import re
 import docker
 
 from common.paasevents import write_event, get_events
 import common.exceptions as exceptions
+from common.datastore import Redis
 
 class Applications(object):
 
-    def __init__(self, config):
-        self.config = config
-        self.redis_conn = redis.StrictRedis(self.config.redis_host)
+    def __init__(self):
+	self.redis_conn = Redis().getConnection()
 
     def get_all(self):
         applications = list(self.redis_conn.smembers("apps"))

@@ -12,7 +12,7 @@ sys.path.append(dirname(realpath(__file__)) + '../' )
 
 from common.applications import *
 from common.globalconfig import *
-from common.config import Config
+from common.datastore import Redis
 try:
 	from common.appupdate import ApplicationUpdater
 except:
@@ -23,10 +23,9 @@ api = Blueprint('api', __name__,
 
 @api.before_request
 def rest_initialization():
-    g.config = Config()
-    g.global_config = GlobalConfig(Config())
-    g.applications = Applications(Config())
-    g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
+    g.global_config = GlobalConfig()
+    g.applications = Applications()
+    g.redis_conn = Redis().getConnection()
 
 @api.after_request
 def api_postprocessing(response):

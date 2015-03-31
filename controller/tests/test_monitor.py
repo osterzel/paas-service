@@ -13,9 +13,7 @@ class TestApplication(unittest.TestCase):
 
     def setUp(self):
         self.data = "123"
-        self.config = MagicMock()
-        self.config.redis_host = "127.0.0.1"
-        self.application = Applications(self.config)
+        self.application = Applications()
 
         self.test_application = "testapplication"
         self.create_record = {
@@ -40,7 +38,7 @@ class TestApplication(unittest.TestCase):
         output = self.application.create_application(self.create_record)
 
         self.assertEqual(self.test_application, output['name'])
-        self.assertEqual(128, output['memory_in_mb'])
+        self.assertEqual('128', output['memory_in_mb'])
         self.assertEqual("testapplication", output['urls'])
 
         output = self.application.get(self.test_application)

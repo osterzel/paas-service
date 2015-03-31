@@ -7,18 +7,16 @@ from scheduler.maxpernode import MaxPerNodeScheduler as Scheduler
 from common.applications import Applications
 from common.globalconfig import GlobalConfig
 from common.notifications import Notifications
-from common.config import Config
 from common.dockerfunctions import DockerFunctions
 
 
 class ApplicationUpdater():
 
 	def __init__(self):
-		self.config = Config()
-		self.globalconfig = GlobalConfig(self.config)
+		self.globalconfig = GlobalConfig()
 		self.nodes = self.globalconfig.get_hosts()
-		self.notifications = Notifications(self.config)
-		self.application = Applications(self.config)
+		self.notifications = Notifications()
+		self.application = Applications()
 		self.logger = logging.getLogger(__name__)
 
 	def process_app(self, app, number_per_node = 1, number_of_containers = 1):
@@ -48,7 +46,7 @@ class ApplicationUpdater():
 				pass
 
 		try:
-			app_class = DockerFunctions(app, self.nodes, self.config, self.notifications)
+			app_class = DockerFunctions(app, self.nodes, self.notifications)
 			ss = Scheduler(app_class.start_instance, app_class.shutdown_instance, app_class.list_nodes, app_class.health_check, number_per_node)
 			self.logger.debug("Starting scheduler for app:{}".format(app))
 			output = list()

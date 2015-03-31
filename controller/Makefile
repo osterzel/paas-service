@@ -20,7 +20,7 @@ venv/bin/activate: requirements.txt
 test: venv
 	venv/bin/pip install -Uqr requirements-tests.txt	
 	test -d target || mkdir target
-	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server,client
+	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server,common,client
 
 ami: packerinstall
 	PATH=$(PATH); cd packer; pwd; packer build -only amazon-ebs packer-template.json

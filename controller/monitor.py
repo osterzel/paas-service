@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import redis
 import time
 import sys
 import random
@@ -9,6 +8,8 @@ import re
 import logging
 from common.config import Config
 from common.appupdate import ApplicationUpdater
+from common.config import Config
+from common.datastore import Redis
 
 def process_applications():
 	config = Config()
@@ -19,7 +20,7 @@ def process_applications():
 	logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 	logger = logging.getLogger(__name__)
-	redis_conn = redis.StrictRedis(config.redis_host)
+	redis_conn = Redis().getConnection()
 	appupdate = ApplicationUpdater()
 
 	while True:

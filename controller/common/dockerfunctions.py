@@ -15,11 +15,10 @@ from common.applications import Applications
 
 class DockerFunctions():
 
-    def __init__(self, app, nodes, config, notifications):
-        self.config = config
+    def __init__(self, app, nodes, notifications):
         self.logger = logging.getLogger(__name__)
         self.notifications = notifications
-        self.application = Applications(self.config)
+        self.application = Applications()
         self.app = app
         self.nodes = nodes
 

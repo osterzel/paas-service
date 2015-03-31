@@ -12,10 +12,7 @@ from common.globalconfig import *
 class TestGlobal(unittest.TestCase):
 
     def setUp(self):
-        self.config = MagicMock()
-        self.config.redis_host = "127.0.0.1"
-        self.global_config = GlobalConfig(self.config)
-
+        self.global_config = GlobalConfig()
 	self.host = "127.0.0.1"
 
     def tearDown(self):

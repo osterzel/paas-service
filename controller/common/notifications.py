@@ -2,12 +2,14 @@ import pika
 import os
 import logging
 
+from config import Config
+
 
 class Notifications(object):
-    def __init__(self, config):
+    def __init__(self):
 	self.logger = logging.getLogger(__name__)
         self.connection = None
-	self.config = config
+	self.config = Config() 
         self.parameters = pika.URLParameters(os.environ.get("RABBITMQ_URI", "amqp://dev:dev@localhost:5672/paas?heartbeat=5"))
         print "RabbitMQ Url: {}".format(self.parameters)
         self.establish_connection(self.parameters)

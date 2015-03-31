@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 import json
-import redis
 import time
 import datetime
 import os
 import logging
 from config import Config
+from datastore import Redis
 
 config = Config()
 
-events_conn = redis.StrictRedis(config.redis_host, db=2)
+events_conn = Redis(db=2).getConnection()
 
 def write_event(event_type, message, app_name='global'):
     try:

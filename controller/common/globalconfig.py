@@ -5,13 +5,12 @@ import sys
 
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
-import redis
+from common.datastore import Redis
 
 class GlobalConfig(object):
 
-    def __init__(self, config):
-        self.config = config
-        self.redis_conn = redis.StrictRedis(self.config.redis_host)
+    def __init__(self):
+        self.redis_conn = Redis().getConnection() 
 
     def get_hosts(self):
         hosts = list(self.redis_conn.smembers("hosts"))

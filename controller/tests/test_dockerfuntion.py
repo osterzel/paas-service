@@ -15,9 +15,7 @@ class TestDockerFunctions(unittest.TestCase):
 
     def setUp(self):
 	self.env_test = [ "ENV=ENV=1" ]
-	config = MagicMock() 
-	config.redis_host = 'localhost'
-	self.dockerfunctions = DockerFunctions(None, None, config, None)
+	self.dockerfunctions = DockerFunctions(None, None, None)
 
     def tearDown(self):
         pass

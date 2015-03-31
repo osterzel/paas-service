@@ -84,7 +84,6 @@ def step_impl(context, url):
 	    response = context.web_requests.get(context.router_url, headers=headers)	
             if response.status_code != 200:
                time.sleep(2)
-               count += 1
                continue
             else:
                break

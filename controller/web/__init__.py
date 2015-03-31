@@ -1,14 +1,13 @@
 import sys
 
 from flask import g, Blueprint, render_template, request
-import redis
 from os.path import dirname, realpath
 
 
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
 from common.paasevents import get_events
-from common.config import Config
+from common.datastore import Redis
 
 from common.applications import Applications
 
@@ -17,9 +16,8 @@ admin_web = Blueprint('admin_web', __name__,
 
 @admin_web.before_request
 def rest_initialization():
-     g.config = Config()
-     g.application = Applications(g.config)
-     g.redis_conn = redis.StrictRedis(g.config.redis_host, db=0)
+     g.application = Applications()
+     g.redis_conn = Redis().getConnection() 
 
 @admin_web.route('/')
 @admin_web.route('/dashboard')
