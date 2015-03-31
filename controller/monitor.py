@@ -32,7 +32,7 @@ def process_applications():
 				name = redis_app.split('#')[1]
 				apps.append(name)
 		for app in apps: 
-				logger.info("Processing app: {}".format(app))
+				logger.debug("Processing app: {}".format(app))
 				output = appupdate.process_app(app)
 				
 		time.sleep(5)

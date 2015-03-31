@@ -95,7 +95,7 @@ class DockerFunctions():
                         self.logger.debug("Container {} port healthcheck failed".format(container))
                         return False
 
-            self.logger.info("Container {} healthcheck successful".format(container))
+            self.logger.debug("Container {} healthcheck successful".format(container))
         return True
 
     def list_nodes(self):
