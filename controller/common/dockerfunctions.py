@@ -91,7 +91,7 @@ class DockerFunctions():
                                 time.sleep(2)
 
                     if success == 0:
-                        self.logger.debug("Application: {}, Container {} port healthcheck failed".format(self.app, container))
+                        self.logger.info("Application: {}, Container {} port healthcheck failed".format(self.app, container))
                         return False
 
             self.logger.debug("Container {} healthcheck successful".format(container))
