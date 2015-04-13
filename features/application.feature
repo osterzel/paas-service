@@ -5,9 +5,8 @@ Feature: application lifecycle
        When I create an application "testapp"
        Then I get an application json document for "testapp" with variable "name" and value "testapp"
 
-
     Scenario: I build a test application slug
-	     Given I have a slugbuilder service
+       Given I have a slugbuilder service
        When I post a tarball to the slugbuilder service
        Then I get a slug for my application 
 
@@ -28,7 +27,7 @@ Feature: application lifecycle
 
     Scenario: set application slug to an invalid slug url
         Given I have a paas api service
-        When I update the slug url for application "testapp" to "invalidurl"
+        When I set the slug url for application "testapp" to "invalidurl"
         Then I get a return message "Slug URL invalidurl is either invalid or inaccessible"
 
     Scenario: set application slug

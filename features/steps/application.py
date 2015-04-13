@@ -52,7 +52,17 @@ def step_impl(context, application):
 	headers = { "Content-type": "application/json" }
 	payload = { "environment": { "SLUG_URL": context.slug_url } } 
 	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
-	
+
+@when('I set the slug url for application "{application}" to "{url}"')
+def step_impl(context, application, url):
+	headers = { "Content-type": "application/json" }
+	payload = { "environment": { "SLUG_URL": url } }
+	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+
+@then('I get a return message "{message}"')
+def step_impl(context, message):
+    assert_that(context.response.text, contains_string(message))
+
 @then('I wait for application "{application}" to reach state "{state}"')
 def step_impl(context, application, state):
 	count = 0
