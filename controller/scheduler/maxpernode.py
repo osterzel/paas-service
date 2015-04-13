@@ -100,7 +100,6 @@ class MaxPerNodeScheduler(object):
         self.running_instances_by_node = self.list_running_by_node_func()
 
         double_expected_max_iterations = max(len([i for ni in self.running_instances_by_node.values() for i in ni]) * 2, desired_qty * 2)
-	print double_expected_max_iterations
 
         # If double_expected_max_iterations is 0 that means we want 0 instances and we're already there, so return True
         if double_expected_max_iterations == 0:
