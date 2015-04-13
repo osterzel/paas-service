@@ -59,12 +59,13 @@ class TestApplication(unittest.TestCase):
 
         if output:
             output = self.application.delete_application(self.test_application)
-            self.assertEqual("Application deleted", output['message'])
+            self.assertEqual("Application {} deleted".format(self.test_application), output['message'])
 
 
         output = self.application.create_application(self.create_record)
 
         self.assertEqual(self.test_application, output['name'])
+        self.assertEqual("NEW", output['state'])
         self.assertEqual("128", output['memory_in_mb'])
         self.assertEqual("testapplication", output['urls'])
 	self.assertEqual("web", output['type'])
@@ -73,7 +74,7 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(self.test_application, output['name'])
 
         output = self.application.delete_application(self.test_application)
-        self.assertEqual("Application deleted", output['message'])
+        self.assertEqual("Application {} deleted".format(self.test_application), output['message'])
 
     def test_parameters(self):
         output = self.setup_application_record()
@@ -87,6 +88,12 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(output['command'], self.update_record['command'])
         self.assertEqual(output['type'], self.update_record['type'])
 
+    def test_invalid_slug_url(self):
+	output = self.setup_application_record()
+
+	with self.assertRaises(Exception) as context:
+		self.application.update_application(self.test_application, { "environment": { "SLUG_URL": "invalid_url" }})
+	self.assertRegexpMatches(context.exception.message, "Slug URL invalid_url is either invalid or inaccessible")
 
     def test_application_restart(self):
 	output = self.setup_application_record()

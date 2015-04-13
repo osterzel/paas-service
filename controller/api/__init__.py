@@ -3,7 +3,7 @@ __author__ = 'oliver'
 import hashlib
 import sys
 
-from flask import g, Blueprint, request
+from flask import g, Blueprint, request, json
 from flask.ext import restful
 from os.path import dirname, realpath
 
@@ -34,15 +34,23 @@ def api_postprocessing(response):
     response.headers.add('Etag', m.hexdigest())
     return response
 
-paas_api = restful.Api(api, catch_all_404s=True)
+paas_api = restful.Api(api, default_mediatype = 'application/json', catch_all_404s=True)
+
+def validate_json(request):
+        if request.headers['Content-type'] != 'application/json':
+            restful.abort(400, message = 'Content-type must be application/json')
+
+        try:
+            json.dumps(request.json)
+        except Exception as e:
+            restful.abort(400, message = 'Not valid json, {}'.format(request.data))
 
 class ApplicationCollection(restful.Resource):
     def get(self):
         return g.applications.get_all()
 
     def post(self):
-        if not request.json:
-            restful.abort(400)
+        validate_json(request)
 
         application_request = request.json
         print application_request
@@ -54,6 +62,7 @@ class ApplicationCollection(restful.Resource):
         return application_response, 201
 
 class ApplicationRecord(restful.Resource):
+
     def get(self, name):
         try:
             return g.applications.get(name)
@@ -62,14 +71,12 @@ class ApplicationRecord(restful.Resource):
 
     def patch(self, name):
 
-        if not request.json:
-            restful.abort(400)
-
+        validate_json(request)
         application_request = request.json
         try:
             application_response = g.applications.update_application(name, application_request)
         except Exception as e:
-            restful.abort(400, message = e.message)
+            restful.abort(500, message = e.message)
 
 	if request.args.get('synchronous'):
     		appupdater = ApplicationUpdater()
@@ -92,7 +99,6 @@ class ApplicationUrls(restful.Resource):
         application_details = g.applications.get_all_urls()
 
         return application_details, 201
-
 
 
 

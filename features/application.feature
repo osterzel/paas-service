@@ -26,6 +26,11 @@ Feature: application lifecycle
         When I set variable "command" to "start web" for application "testapp"
         Then I get an application json document for "testapp" with variable "command" and value "start web"
 
+    Scenario: set application slug to an invalid slug url
+        Given I have a paas api service
+        When I update the slug url for application "testapp" to "invalidurl"
+        Then I get a return message "Slug URL invalidurl is either invalid or inaccessible"
+
     Scenario: set application slug
         Given I have a paas api service
         When I update the slug url for application "testapp"

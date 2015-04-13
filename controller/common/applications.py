@@ -8,6 +8,7 @@ sys.path.append(dirname(realpath(__file__)) + '../../' )
 from datetime import datetime
 import re
 import docker
+import requests
 
 from common.paasevents import write_event, get_events
 import common.exceptions as exceptions
@@ -77,7 +78,7 @@ class Applications(object):
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
             {
-                "name": name, "type": "web", "docker_image": "", "state": "virgin", "memory_in_mb": "128", "command": "", "urls": name, "error_count": 0, "container_count": "2" })
+                "name": name, "type": "web", "docker_image": "", "state": "NEW", "memory_in_mb": "128", "command": "", "urls": name, "error_count": 0, "container_count": "2" })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
         pipe.execute()
@@ -87,10 +88,12 @@ class Applications(object):
     def update_application(self, name, data):
 
         if not self.redis_conn.exists("app#{}".format(name)):
-            raise Exception
+            raise Exception("Application not found")
         if self.redis_conn.hget("app#{}".format(name), "state") == "deleting":
-            raise Exception
+            raise Exception("Application already scheduled for deletion")
         pipe = self.redis_conn.pipeline()
+
+        current_record = self.redis_conn.hgetall("app#{}".format(name))
 
         if "restart" in data:
             environments = self.redis_conn.hgetall("{}:environment".format(name))
@@ -103,7 +106,7 @@ class Applications(object):
                 data['environment'] = {}
                 data['environment']['RESTART'] = new_counter
 
-        write_event("UPDATED APP", "App {}, restart called".format(name), name)
+            write_event("UPDATED APP", "App {}, restart called".format(name), name)
 
         if "memory_in_mb" in data:
             pipe.hset("app#{}".format(name), "memory_in_mb", data["memory_in_mb"])
@@ -124,6 +127,15 @@ class Applications(object):
             pipe.hset("app#{}".format(name), "container_count", data['container_count'])
 
         if "environment" in data:
+            #Check slug_url, if not valid return badly
+            if "SLUG_URL" in data["environment"].keys():
+                try:
+                    response = requests.head(data["environment"]["SLUG_URL"], timeout=2)
+                    if response.status_code != 200:
+                        raise Exception
+                except Exception as e:
+                    raise Exception("Slug URL {} is either invalid or inaccessible".format(data["environment"]["SLUG_URL"]))
+
             if "PORT" in data["environment"].keys():
                 raise Exception
             to_set = {k:v for k,v in data["environment"].items() if v}
@@ -135,6 +147,10 @@ class Applications(object):
         pipe.hdel("app#{}".format(name), "error_count")
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
+        new_record = self.redis_conn.hgetall("app#{}".format(name))
+
+        diff = set(set(current_record.items()) ^ set(new_record.items()))
+
         write_event("UPDATED APP", "App {} was updated".format(name), name)
 
         self.publish_updates(name)
@@ -143,7 +159,7 @@ class Applications(object):
 
     def delete_application(self, name):
         if not self.redis_conn.exists("app#{}".format(name)):
-            raise Exception
+            raise Exception("Application not found")
 
         port = self.redis_conn.hget("app#{}".format(name), "port")
 
@@ -156,7 +172,7 @@ class Applications(object):
         pipe.execute()
 
         write_event("DELETE APP", "Deleted app - {}".format(name), name)
-        return { "message": "Application deleted", "app_port": port}
+        return { "message": "Application {} deleted".format(name), "app_port": port}
 
     def publish_updates(self, app):
         self.redis_conn.publish('app_changes', app)

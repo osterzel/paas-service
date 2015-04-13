@@ -32,7 +32,6 @@ def get_events(app_name='all'):
     if ( app_name != "all"):
         try:
             events_data = list(events_conn.zrange("app#{}".format(app_name), 0, 100, withscores=True))
-            print events_data
         except:
             logging.error("Unable to get list")
     else:
