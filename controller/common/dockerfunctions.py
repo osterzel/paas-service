@@ -42,10 +42,10 @@ class DockerFunctions():
                     del(current_environment['PORT'])
 
                 if current_environment != app_details['environment']:
-                    self.logger.info("Container - {}: {} on {} has a different environment".format(container, r['Name'], node))
+                    self.logger.info("Application: {}, Container - {}: {} on {} has a different environment".format(self.app, container, r['Name'], node))
                     return False
                 if not r['State']['Running']:
-                    self.logger.info("Container - {}: {} on {} is not running".format(container, r['Name'], node))
+                    self.logger.info("Application: {}, Container - {}: {} on {} is not running".format(self.app, container, r['Name'], node))
                     return False
 
                 #If the container is not an app container then check the web endpoint
@@ -60,7 +60,7 @@ class DockerFunctions():
                             healthcheck_url = 'http://' + node + ':' + port + '/internal/healthcheck' 
                             response = requests.get(healthcheck_url)
                             if response.status_code == 200:
-                                self.logger.debug("Container {} healthcheck url successful".format(container))
+                                self.logger.debug("Application: {}, Container {} healthcheck url successful".format(self.app, container))
                                 return True
                             else: 
                                 time.sleep(2)
@@ -68,7 +68,7 @@ class DockerFunctions():
                             time.sleep(2)
 
                     if success == 0:
-                        self.logger.debug("Container {} healthcheck url failed".format(container))
+                        self.logger.info("Application: {}, Container {} healthcheck url failed".format(self.app, container))
                         return False
 
 
@@ -85,13 +85,13 @@ class DockerFunctions():
                             socket.setdefaulttimeout(3)
                             s.connect((node, int(port)))
                             s.close()
-                            self.logger.debug("Container {} port healthcheck successful".format(container))
+                            self.logger.debug("Application: {}, Container {} port healthcheck successful".format(self.app, container))
                             return True
                         except Exception as e:
                                 time.sleep(2)
 
                     if success == 0:
-                        self.logger.debug("Container {} port healthcheck failed".format(container))
+                        self.logger.debug("Application: {}, Container {} port healthcheck failed".format(self.app, container))
                         return False
 
             self.logger.debug("Container {} healthcheck successful".format(container))
@@ -153,7 +153,7 @@ class DockerFunctions():
                 self.logger.info("Completed starting container")
                 return True
         else:
-            self.logger.info("Failed starting container")
+            self.logger.info("Application: {}, Failed starting container".format(self.app))
             return False
 
     def shutdown_instance(self,container, restart=False):
