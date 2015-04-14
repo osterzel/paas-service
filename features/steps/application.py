@@ -52,6 +52,7 @@ def step_impl(context, application):
 	headers = { "Content-type": "application/json" }
 	payload = { "environment": { "SLUG_URL": context.slug_url } } 
 	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+	assert_that(context.response.status_code, equal_to(201))
 
 @when('I set the slug url for application "{application}" to "{url}"')
 def step_impl(context, application, url):
