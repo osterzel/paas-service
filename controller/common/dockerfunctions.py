@@ -8,6 +8,7 @@ import socket
 import logging
 import sys
 import requests
+from paasevents import write_event
 
 import docker
 from common.applications import Applications
@@ -43,9 +44,12 @@ class DockerFunctions():
 
                 if current_environment != app_details['environment']:
                     self.logger.info("Application: {}, Container - {}: {} on {} has a different environment".format(self.app, container, r['Name'], node))
+                    write_event("HEALTHCHECK_APP", "Container has different configuration", self.app)
                     return False
                 if not r['State']['Running']:
                     self.logger.info("Application: {}, Container - {}: {} on {} is not running".format(self.app, container, r['Name'], node))
+                    write_event("HEALTHCHECK_APP", "Container is not running", self.app)
+                    write_event("HEALTHCHECK_APP", "Last container logs {}".format())
                     return False
 
                 #If the container is not an app container then check the web endpoint
@@ -69,6 +73,7 @@ class DockerFunctions():
 
                     if success == 0:
                         self.logger.info("Application: {}, Container {} healthcheck url failed".format(self.app, container))
+                        write_event("HEALTHCHECK_APP", "No reply from container port {}, failed healthcheck".format(port), self.app)
                         return False
 
 
@@ -133,7 +138,13 @@ class DockerFunctions():
         if app_type == "web" or app_type == "weburlcheck":
             self.logger.info("Starting a web type container")
             port = self.application.allocate_port()
+            #Check if the container exists on the machine otherwise pull it
+            try:
+                r = c.inspect_image(docker_image)
+            except docker.ApiError:
+                write_event("START_CONTAINER", "Docker image {} did not exist on node".format(), self.app)
             r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
+
             c.start(r['Id'], port_bindings={"{}/tcp".format(port): port})
         else:
             self.logger.info("Starting a app type container")

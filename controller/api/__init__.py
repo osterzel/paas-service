@@ -13,6 +13,8 @@ sys.path.append(dirname(realpath(__file__)) + '../' )
 from common.applications import *
 from common.globalconfig import *
 from common.datastore import Redis
+from common.paasevents import get_events
+
 try:
 	from common.appupdate import ApplicationUpdater
 except:
@@ -66,7 +68,7 @@ class ApplicationRecord(restful.Resource):
     def get(self, name):
         try:
             return g.applications.get(name)
-        except IndexError:
+        except Exception as e:
             restful.abort(404)
 
     def patch(self, name):
@@ -100,10 +102,15 @@ class ApplicationUrls(restful.Resource):
 
         return application_details, 201
 
+class ApplicationLogs(restful.Resource):
+    def get(self, name):
+        return get_events(app_name = name), 200
+
 
 
 paas_api.add_resource(ApplicationCollection, '/app', '/app/')
 paas_api.add_resource(ApplicationRecord, '/app/<string:name>')
+paas_api.add_resource(ApplicationLogs, '/app/<string:name>/logs')
 paas_api.add_resource(ApplicationUrls, '/app/urls', '/app/urls/')
 
 class HostCollection(restful.Resource):

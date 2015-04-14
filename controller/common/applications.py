@@ -56,18 +56,16 @@ class Applications(object):
             try:
                 main_url = app_details['name'] + app_details['global_environment']['domain_name']
             except:
+                print "Something is happening"
+                print app_details
                 main_url = app_details['name']
             urls = main_url
 
             app_details['urls'] = main_url
 
-        #app_details['port'] = list(self.redis_conn.smembers("hosts"))
-
         return app_details
 
     def create_application(self, data):
-
-        #Don't allocate port her but rather when we come to create a container we allocate a port to that
 
         name = data['name']
 
@@ -90,10 +88,11 @@ class Applications(object):
         if not self.redis_conn.exists("app#{}".format(name)):
             raise Exception("Application not found")
         if self.redis_conn.hget("app#{}".format(name), "state") == "deleting":
-            raise Exception("Application already scheduled for deletion")
+            raise Exception("Application scheduled for deletion")
         pipe = self.redis_conn.pipeline()
 
         current_record = self.redis_conn.hgetall("app#{}".format(name))
+        current_environment = self.redis_conn.hgetall("{}:environment".format(name))
 
         if "restart" in data:
             environments = self.redis_conn.hgetall("{}:environment".format(name))
@@ -122,6 +121,7 @@ class Applications(object):
 
         if "type" in data:
             pipe.hset("app#{}".format(name), "type", data['type'])
+
         pipe.hdel("app#{}".format(name), "app_type")
         if "container_count" in data:
             pipe.hset("app#{}".format(name), "container_count", data['container_count'])
@@ -134,6 +134,7 @@ class Applications(object):
                     if response.status_code != 200:
                         raise Exception
                 except Exception as e:
+                    write_event("UPDATE APP", "Failed updating app, slug url {} invalid or inaccessible".format(data['environment']['SLUG_URL']), name)
                     raise Exception("Slug URL {} is either invalid or inaccessible".format(data["environment"]["SLUG_URL"]))
 
             if "PORT" in data["environment"].keys():
@@ -148,8 +149,11 @@ class Applications(object):
         pipe.hset("app#{}".format(name), "state", "OUT OF DATE, AWAITING DEPLOY")
         pipe.execute()
         new_record = self.redis_conn.hgetall("app#{}".format(name))
+        new_environment = self.redis_conn.hgetall("{}:environment".format(name))
 
+        env_diff = set(set(current_environment.items()) ^ set(new_environment.items()))
         diff = set(set(current_record.items()) ^ set(new_record.items()))
+
 
         write_event("UPDATED APP", "App {} was updated".format(name), name)
 
@@ -182,15 +186,15 @@ class Applications(object):
         self.redis_conn.hset("app#{}".format(name), "state", message)
 
     def get_application_state(self, name):
-	return self.redis_conn.hget("app#{}".format(name), "state")
+        return self.redis_conn.hget("app#{}".format(name), "state")
 
     def write_container_logs(self, name, log_array):
-	for entry in log_array:
-		self.redis_conn.lpush("logs:{}".format(name), entry)
-		self.redis_conn.ltrim("logs:{}".format(name), 0, 150)
+        for entry in log_array:
+            self.redis_conn.lpush("logs:{}".format(name), entry)
+            self.redis_conn.ltrim("logs:{}".format(name), 0, 150)
 
     def get_container_logs(self, name):
-	return self.redis_conn.lrange("logs:{}".format(name), 0, -1)
+        return self.redis_conn.lrange("logs:{}".format(name), 0, -1)
 
     def set_application_logs(self, name, node, container_logs):
         self.redis_conn.hset("app#{}:logs".format(name), node, container_logs)
@@ -248,14 +252,14 @@ class Applications(object):
         return application_details
 
     def allocate_port(self):
-	if not self.redis_conn.exists("ports"):
-		self.redis_conn.sadd("ports", *range(30000,60000))
-	port = self.redis_conn.spop("ports")
-	return port
+        if not self.redis_conn.exists("ports"):
+            self.redis_conn.sadd("ports", *range(30000,60000))
+        port = self.redis_conn.spop("ports")
+        return port
 
     def return_port(self, port):
-	try:
-		self.redis_conn.sadd("ports", port)
-		return True
-	except:
-		return False
+        try:
+            self.redis_conn.sadd("ports", port)
+            return True
+        except:
+            return False
