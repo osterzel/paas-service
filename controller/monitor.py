@@ -25,7 +25,6 @@ def process_applications():
 
 	while True:
 		apps = redis_conn.lrange('monitor', 0, -1)
-		#apps = [ "ci-trend-admin", "courtdocs.daemon.ci" ]
 		redis_apps = redis_conn.keys("app#*")
 		apps = []
 		for redis_app in redis_apps:

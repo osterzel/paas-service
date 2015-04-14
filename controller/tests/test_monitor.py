@@ -32,7 +32,7 @@ class TestApplication(unittest.TestCase):
 
         if output:
             output = self.application.delete_application(self.test_application)
-            self.assertEqual("Application deleted", output['message'])
+            self.assertEqual("Application {} deleted".format(self.test_application), output['message'])
 
 
         output = self.application.create_application(self.create_record)
@@ -45,6 +45,6 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(self.test_application, output['name'])
 
         output = self.application.delete_application(self.test_application)
-        self.assertEqual("Application deleted", output['message'])
+        self.assertEqual("Application {} deleted".format(self.test_application), output['message'])
 
 

@@ -48,6 +48,3 @@ class TestServer(unittest.TestCase):
 
         response = self.flask_app.get("/web/global")
         self.assertEqual(200, response.status_code)
-
-
-
