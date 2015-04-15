@@ -25,8 +25,6 @@ class ApplicationUpdater():
         if not self.application.set_application_lock(app):
             return False
         else:
-            print "This is the app"
-            print app
             app_details = self.application.get(app, containers=False)
             if app_details['command'] == "":
                 self.logger.debug("Command not set, application skipped")

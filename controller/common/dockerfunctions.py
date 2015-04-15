@@ -49,7 +49,7 @@ class DockerFunctions():
                 if not r['State']['Running']:
                     self.logger.info("Application: {}, Container - {}: {} on {} is not running".format(self.app, container, r['Name'], node))
                     write_event("HEALTHCHECK_APP", "Container is not running", self.app)
-                    write_event("HEALTHCHECK_APP", "Last container logs {}".format())
+                    write_event("HEALTHCHECK_APP", "Last container logs {}".format(self.app))
                     return False
 
                 #If the container is not an app container then check the web endpoint

@@ -154,7 +154,6 @@ class Applications(object):
         env_diff = set(set(current_environment.items()) ^ set(new_environment.items()))
         diff = set(set(current_record.items()) ^ set(new_record.items()))
 
-
         write_event("UPDATED APP", "App {} was updated".format(name), name)
 
         self.publish_updates(name)
