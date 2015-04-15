@@ -130,7 +130,7 @@ class Applications(object):
             #Check slug_url, if not valid return badly
             if "SLUG_URL" in data["environment"].keys():
                 try:
-                    response = requests.head(data["environment"]["SLUG_URL"], timeout=2)
+                    response = requests.get(data["environment"]["SLUG_URL"], timeout=2, stream=True)
                     if response.status_code != 200:
                         raise Exception
                 except Exception as e:
@@ -153,7 +153,6 @@ class Applications(object):
 
         env_diff = set(set(current_environment.items()) ^ set(new_environment.items()))
         diff = set(set(current_record.items()) ^ set(new_record.items()))
-
 
         write_event("UPDATED APP", "App {} was updated".format(name), name)
 

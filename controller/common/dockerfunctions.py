@@ -49,7 +49,7 @@ class DockerFunctions():
                 if not r['State']['Running']:
                     self.logger.info("Application: {}, Container - {}: {} on {} is not running".format(self.app, container, r['Name'], node))
                     write_event("HEALTHCHECK_APP", "Container is not running", self.app)
-                    write_event("HEALTHCHECK_APP", "Last container logs {}".format())
+                    write_event("HEALTHCHECK_APP", "Last container logs {}".format(c.logs(container=container, tail=2)[0:500]), self.app)
                     return False
 
                 #If the container is not an app container then check the web endpoint
@@ -101,6 +101,19 @@ class DockerFunctions():
 
             self.logger.debug("Container {} healthcheck successful".format(container))
         return True
+
+    def container_logs(self):
+        application_logs = {}
+        nodes = self.list_nodes()
+        for node in nodes:
+            c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
+            for container in nodes[node]:
+                print container
+                application_logs[container[:8]] = (c.logs(container = container, timestamps=True, stream=True))
+            c.close()
+
+        return application_logs
+
 
     def list_nodes(self):
         nodes = dict()

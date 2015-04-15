@@ -3,7 +3,7 @@ __author__ = 'oliver'
 import hashlib
 import sys
 
-from flask import g, Blueprint, request, json
+from flask import g, Blueprint, request, json, Response
 from flask.ext import restful
 from os.path import dirname, realpath
 
@@ -14,6 +14,7 @@ from common.applications import *
 from common.globalconfig import *
 from common.datastore import Redis
 from common.paasevents import get_events
+from common.dockerfunctions import DockerFunctions
 
 try:
 	from common.appupdate import ApplicationUpdater
@@ -102,14 +103,26 @@ class ApplicationUrls(restful.Resource):
 
         return application_details, 201
 
-class ApplicationLogs(restful.Resource):
+class ApplicationEvents(restful.Resource):
     def get(self, name):
         return get_events(app_name = name), 200
+
+class ApplicationLogs(restful.Resource):
+    def get(self, name):
+        def generate():
+            docker_functions = DockerFunctions(name, g.global_config.get_hosts(), None)
+            container_logs = docker_functions.container_logs()
+            for container in container_logs:
+                for row in container_logs[container]:
+                    yield row
+
+        return Response(generate(), mimetype='application/json')
 
 
 
 paas_api.add_resource(ApplicationCollection, '/app', '/app/')
 paas_api.add_resource(ApplicationRecord, '/app/<string:name>')
+paas_api.add_resource(ApplicationEvents, '/app/<string:name>/events')
 paas_api.add_resource(ApplicationLogs, '/app/<string:name>/logs')
 paas_api.add_resource(ApplicationUrls, '/app/urls', '/app/urls/')
 
