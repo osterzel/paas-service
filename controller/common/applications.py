@@ -130,7 +130,7 @@ class Applications(object):
             #Check slug_url, if not valid return badly
             if "SLUG_URL" in data["environment"].keys():
                 try:
-                    response = requests.head(data["environment"]["SLUG_URL"], timeout=2)
+                    response = requests.get(data["environment"]["SLUG_URL"], timeout=2, stream=True)
                     if response.status_code != 200:
                         raise Exception
                 except Exception as e:
