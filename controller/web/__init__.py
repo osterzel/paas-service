@@ -58,16 +58,8 @@ def application_admin(app_name):
     events.reverse()
 
     hosts = g.redis_conn.smembers("hosts")
-    raw_app_logs = g.application.get_container_logs(app_name)
-    app_logs = []
-    #Make sure strings are unicode
-    for logentry in raw_app_logs:
-       app_logs.append(unicode(logentry, 'utf8'))
 
-    #for host in raw_app_logs:
-    #    raw_app_logs[host] = raw_app_logs[host].split("\n")
-
-    return render_template('admin/application.html', app = app, apps = apps, events = events, app_logs = app_logs, hosts = hosts )
+    return render_template('admin/application.html', app = app, apps = apps, events = events, app_logs = [], hosts = hosts )
 
 @admin_web.route("/global/", methods=["GET"])
 @admin_web.route("/global", methods=["GET"])

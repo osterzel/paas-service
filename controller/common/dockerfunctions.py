@@ -110,6 +110,7 @@ class DockerFunctions():
             for container in nodes[node]:
                 print container
                 application_logs[container[:8]] = (c.logs(container = container, timestamps=True, stream=True))
+            c.close()
 
         return application_logs
 
