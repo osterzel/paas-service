@@ -1,0 +1,585 @@
+{
+    "Parameters": {
+        "environment": {
+            "AllowedPattern": "^[a-z0-9]+$",
+            "Description": "Name of the environment in lower-case (e.g. 'tomy', 'ci', 'aslive' or 'production' - /^[a-z0-9]+$/).",
+            "Type": "String"
+        },
+        "imageId": {
+            "AllowedPattern": "^ami-[a-z0-9]+$",
+            "Description": "The AMI for the auto-scaling group to create EC2 instance(s) with - /^ami-[a-z0-9]+$/).",
+            "Type": "String"
+        },
+        "instanceType": {
+            "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
+            "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
+            "Type": "String"
+        },
+        "keyName": {
+            "Description": "SSH key name for accessing the instances.",
+            "Type": "AWS::EC2::KeyPair::KeyName"
+        },
+        "maxInstances": {
+            "AllowedPattern": "^\\d+$",
+            "Default": "3",
+            "Description": "The maximum number of instances in the AutoScalingGroup (/^\\d+$/).",
+            "Type": "String"
+        },
+        "minInstances": {
+            "AllowedPattern": "^\\d+$",
+            "Default": "2",
+            "Description": "The minimum number of instances in the AutoScalingGroup (/^\\d+$/).",
+            "Type": "String"
+        },
+        "privateSubnet": {
+            "Description": "Private subnets in VPC as comma separated values. eg subnet-72852a05,subnet-1e428247,subnet-5980063c",
+            "Type": "CommaDelimitedList"
+        },
+        "vpc": {
+            "Description": "The id of the VPC that this should be launched into (/^vpc-[0-9a-f]+$/).",
+            "Type": "AWS::EC2::VPC::Id"
+        }
+    },
+    "Resources": {
+        "ASG": {
+            "Properties": {
+                "AvailabilityZones": [
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "a"
+                            ]
+                        ]
+                    },
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "b"
+                            ]
+                        ]
+                    },
+                    {
+                        "Fn::Join": [
+                            "",
+                            [
+                                {
+                                    "Ref": "AWS::Region"
+                                },
+                                "c"
+                            ]
+                        ]
+                    }
+                ],
+                "LaunchConfigurationName": {
+                    "Ref": "LaunchConfig"
+                },
+                "LoadBalancerNames": [
+                    {
+                        "Ref": "ELB"
+                    }
+                ],
+                "MaxSize": {
+                    "Ref": "maxInstances"
+                },
+                "MinSize": {
+                    "Ref": "minInstances"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Fn::Join": [
+                                " ",
+                                [
+                                    {
+                                        "Ref": "environment"
+                                    },
+                                    "aws-proxy"
+                                ]
+                            ]
+                        }
+                    }
+                ],
+                "VPCZoneIdentifier": {
+                    "Ref": "privateSubnet"
+                }
+            },
+            "Type": "AWS::AutoScaling::AutoScalingGroup",
+        },
+        "ELB": {
+            "Properties": {
+                "ConnectionDrainingPolicy": {
+                    "Enabled": true,
+                    "Timeout": 10
+                },
+                "CrossZone": "true",
+                "HealthCheck": {
+                    "HealthyThreshold": 2,
+                    "Interval": 5,
+                    "Target": "TCP:80",
+                    "Timeout": 4,
+                    "UnhealthyThreshold": 2
+                },
+                "Listeners": [
+                    {
+                        "InstancePort": "80",
+                        "InstanceProtocol": "HTTP",
+                        "LoadBalancerPort": "80",
+                        "Protocol": "HTTP"
+                    }
+                ],
+                "SecurityGroups": [
+                    {
+                        "Ref": "ELBSecurityGroup"
+                    }
+                ],
+                "Subnets": {
+                    "Ref": "privateSubnet"
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                " ",
+                                [
+                                    {
+                                        "Ref": "environment"
+                                    },
+                                    "PaaS Controller load balancer"
+                                ]
+                            ]
+                        }
+                    }
+                ]
+            },
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+        },
+        "ELBSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group to identify traffic from the load balancer",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "10.169.0.0/21",
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "ToPort": "80"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                " ",
+                                [
+                                    {
+                                        "Ref": "environment"
+                                    },
+                                    "aws-proxy",
+                                    "load balancer security group"
+                                ]
+                            ]
+                        }
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "vpc"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "InstanceProfile": {
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "Role"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::InstanceProfile"
+        },
+        "InstanceSecurityGroup": {
+            "Properties": {
+                "GroupDescription": "Security group to protect the EC2 instances",
+                "SecurityGroupIngress": [
+                    {
+                        "CidrIp": "10.0.0.0/8",
+                        "FromPort": "22",
+                        "IpProtocol": "tcp",
+                        "ToPort": "22"
+                    },
+                    {
+                        "CidrIp": "0.0.0.0/0",
+                        "FromPort": "443",
+                        "IpProtocol": "tcp",
+                        "ToPort": "443"
+                    },
+                    {
+                        "FromPort": "80",
+                        "IpProtocol": "tcp",
+                        "SourceSecurityGroupId": {
+                            "Ref": "ELBSecurityGroup"
+                        },
+                        "ToPort": "80"
+                    }
+                ],
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "Value": {
+                            "Fn::Join": [
+                                " ",
+                                [
+                                    {
+                                        "Ref": "environment"
+                                    },
+                                    "aws-proxy",
+                                    "security group"
+                                ]
+                            ]
+                        }
+                    }
+                ],
+                "VpcId": {
+                    "Ref": "vpc"
+                }
+            },
+            "Type": "AWS::EC2::SecurityGroup"
+        },
+        "LaunchConfig": {
+            "Properties": {
+                "AssociatePublicIpAddress": "true",
+                "IamInstanceProfile": {
+                    "Ref": "InstanceProfile"
+                },
+                "ImageId": {
+                    "Ref": "imageId"
+                },
+                "InstanceType": {
+                    "Ref": "instanceType"
+                },
+                "KeyName": {
+                    "Ref": "keyName"
+                },
+                "SecurityGroups": [
+                    {
+                        "Ref": "InstanceSecurityGroup"
+                    }
+                ],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/usr/bin/python\nimport json,subprocess\nfrom base64 import b64decode as b\nsubprocess.check_call([\"configure-service\",json.dumps(dict({",
+                                {
+                                    "Fn::Join": [
+                                        ",",
+                                        [
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"AWS_REGION\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Ref": "AWS::Region"
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"AWS_STACK_NAME\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Ref": "AWS::StackName"
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"ENV_NAME\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Ref": "environment"
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"LOG_GROUP_NAME\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Ref": "awsproxylogs"
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            },
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"VALID_IPS\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Fn::Join": [
+                                                                    ",",
+                                                                    [
+                                                                        {
+                                                                            "Ref": "eip1"
+                                                                        },
+                                                                        {
+                                                                            "Ref": "eip2"
+                                                                        },
+                                                                        {
+                                                                            "Ref": "eip3"
+                                                                        }
+                                                                    ]
+                                                                ]
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "}.items()+",
+                                "{}",
+                                ".items()+{",
+                                {
+                                    "Fn::Join": [
+                                        ",",
+                                        [
+                                            {
+                                                "Fn::Join": [
+                                                    "",
+                                                    [
+                                                        "\"AuthToken\":b(\"",
+                                                        {
+                                                            "Fn::Base64": {
+                                                                "Ref": "AuthToken"
+                                                            }
+                                                        },
+                                                        "\")"
+                                                    ]
+                                                ]
+                                            }
+                                        ]
+                                    ]
+                                },
+                                "}.items()))])\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Type": "AWS::AutoScaling::LaunchConfiguration"
+        },
+        "ProxyBackendCPUAlarm": {
+            "Properties": {
+                "AlarmActions": [
+                    {
+                        "Ref": "AlertQueue"
+                    }
+                ],
+                "AlarmDescription": "Alarm if CPU too high or metric disappears indicating instance is down",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName",
+                        "Value": {
+                            "Ref": "ASG"
+                        }
+                    }
+                ],
+                "EvaluationPeriods": 1,
+                "InsufficientDataActions": [],
+                "MetricName": "CPUUtilization",
+                "Namespace": "AWS/EC2",
+                "Period": 60,
+                "Statistic": "Average",
+                "Threshold": "10"
+            },
+            "Type": "AWS::CloudWatch::Alarm"
+        },
+        "ProxyBackendNetworkInAlarm": {
+            "Properties": {
+                "AlarmActions": [
+                    {
+                        "Ref": "AlertQueue"
+                    }
+                ],
+                "AlarmDescription": "Alarm if network traffic to high",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName",
+                        "Value": {
+                            "Ref": "ASG"
+                        }
+                    }
+                ],
+                "EvaluationPeriods": 1,
+                "InsufficientDataActions": [],
+                "MetricName": "NetworkIn",
+                "Namespace": "AWS/EC2",
+                "Period": 60,
+                "Statistic": "Average",
+                "Threshold": "1500000"
+            },
+            "Type": "AWS::CloudWatch::Alarm"
+        },
+        "ProxyBackendNetworkOutAlarm": {
+            "Properties": {
+                "AlarmActions": [
+                    {
+                        "Ref": "AlertQueue"
+                    }
+                ],
+                "AlarmDescription": "Alarm if network traffic to high",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName",
+                        "Value": {
+                            "Ref": "ASG"
+                        }
+                    }
+                ],
+                "EvaluationPeriods": 1,
+                "InsufficientDataActions": [],
+                "MetricName": "NetworkOut",
+                "Namespace": "AWS/EC2",
+                "Period": 60,
+                "Statistic": "Average",
+                "Threshold": "1500000"
+            },
+            "Type": "AWS::CloudWatch::Alarm"
+        },
+        "Role": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ],
+                    "Version": "2012-10-17"
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                            "Statement": [
+                                {
+                                    "Action": "elasticloadbalancing:DescribeInstanceHealth",
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": [
+                                        "ec2:AssociateAddress",
+                                        "ec2:DescribeAddresses"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": "*"
+                                },
+                                {
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": {
+                                        "Fn::Join": [
+                                            ":",
+                                            [
+                                                "arn:aws:logs",
+                                                {
+                                                    "Ref": "AWS::Region"
+                                                },
+                                                "*:log-group",
+                                                {
+                                                    "Fn::Join": [
+                                                        "",
+                                                        [
+                                                            {
+                                                                "Ref": "AWS::StackName"
+                                                            },
+                                                            "*"
+                                                        ]
+                                                    ]
+                                                }
+                                            ]
+                                        ]
+                                    }
+                                }
+                            ],
+                            "Version": "2012-10-17"
+                        },
+                        "PolicyName": "Policy"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "awsproxylogs": {
+            "Type": "AWS::Logs::LogGroup"
+        },
+        "eip1": {
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Type": "AWS::EC2::EIP"
+        },
+        "eip2": {
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Type": "AWS::EC2::EIP"
+        },
+        "eip3": {
+            "Properties": {
+                "Domain": "vpc"
+            },
+            "Type": "AWS::EC2::EIP"
+        }
+    }
+}
