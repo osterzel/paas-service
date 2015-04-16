@@ -2,7 +2,7 @@
   "variables": {
     "headless": "false",
     "output_dir": ".",
-    "source_ami": "ami-639d0914",
+    "source_ami": "ami-1dbbdc6a",
     "version": "{{ env `VERSION_STRING` }}",
     "NullHostName": "",
     "NullIdentityFile": "",
@@ -12,7 +12,7 @@
   "builders": [
     {
       "type": "amazon-ebs",
-      "ami_name": "paas-node-{{ user `version` }}-ubuntu14-{{timestamp}}",
+      "ami_name": "docker-node-{{ user `version` }}-ubuntu14-{{timestamp}}",
       "instance_type": "t2.small",
       "region": "eu-west-1",
       "source_ami": "{{ user `source_ami` }}",

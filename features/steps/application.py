@@ -101,3 +101,11 @@ def step_impl(context, url):
 
 	assert_that(response.status_code, equal_to(200), context.response.text)
 
+@when('I requests the events for "{application}"')
+def step_impl(context, application):
+    context.response = context.web_requests.get(context.api_url + "/app/" + application + "/events")
+
+@then('I get an event document with a "{event_description}" event')
+def step_impl(context, event_description):
+    assert_that(context.response.text, contains_string(event_description))
+
