@@ -7,3 +7,4 @@ paas-controller-venv
 venv
 output
 .vagrant
+packer_amazon-ebs_aws.box
