@@ -1,0 +1,7 @@
+# partition table of /dev/xvdh
+unit: sectors
+
+/dev/xvdh1 : start=     2048, size= 20969472, Id=83
+/dev/xvdh2 : start=        0, size=        0, Id= 0
+/dev/xvdh3 : start=        0, size=        0, Id= 0
+/dev/xvdh4 : start=        0, size=        0, Id= 0

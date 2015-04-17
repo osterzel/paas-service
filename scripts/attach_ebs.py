@@ -1,15 +1,15 @@
 __author__ = 'unai'
 
-import boto
+import boto.ec2
 from sys import argv
 
 def attach_ebs_volume(instance_id, volume_id):
-    print('Attaching volume')
+    print('Trying to attach volume')
     try:
-        aws_client.attach_volume(volume_id, instance_id, '/dev/sdh')
+        ec2.attach_volume(volume_id, instance_id, '/dev/sdh')
+        print('Successfully attached volume {} to instance {}'.format(volume_id, instance_id))
     except:
-        print('Could not attach volume')
-        raise Exception
+        print('Could not attach volume.')
 
 if __name__ == '__main__':
     print('Running')
@@ -18,7 +18,7 @@ if __name__ == '__main__':
         raise Exception
     else:
         try:
-            aws_client = boto.connect_ec2()
+            ec2 = boto.ec2.connect_to_region('eu-west-1')
         except:
             print('Could not connect to AWS')
             raise Exception
