@@ -9,11 +9,6 @@
       "Description": "SSH key name for accessing the instances.",
       "Type": "AWS::EC2::KeyPair::KeyName"
     },
-    "privateSubnet": {
-      "Description": "Private subnets in VPC as comma separated values. eg subnet-72852a05,subnet-1e428247,subnet-5980063c",
-      "Default": "subnet-72852a05,subnet-1e428247,subnet-5980063c",
-      "Type": "CommaDelimitedList"
-    },
     "vpc": {
       "Description": "The id of the VPC that this should be launched into (/^vpc-[0-9a-f]+$/).",
       "Type": "AWS::EC2::VPC::Id"
@@ -34,16 +29,18 @@
   "Mappings": {
     "InstanceMappings": {
       "controller": {
-        "imageId": "ami-e1610196",
+        "imageId": "ami-c1ee8eb6",
         "instanceType": "m3.medium",
         "maxInstances": "1",
-        "minInstances": "1"
+        "minInstances": "1",
+        "subnets": ["subnet-72852a05"]
       },
       "dockerhosts": {
-        "imageId": "ami-e1610196",
+        "imageId": "ami-c1ee8eb6",
         "instanceType": "m3.xlarge",
         "maxInstances": "3",
-        "minInstances": "3"
+        "minInstances": "3",
+        "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
       }
     }
   },
@@ -59,28 +56,6 @@
                   "Ref": "AWS::Region"
                 },
                 "a"
-              ]
-            ]
-          },
-          {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "b"
-              ]
-            ]
-          },
-          {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "c"
               ]
             ]
           }
@@ -117,7 +92,7 @@
           }
         ],
         "VPCZoneIdentifier": {
-          "Ref": "privateSubnet"
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "subnets"]
         }
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup"
@@ -164,10 +139,10 @@
           "Ref": "DockerhostsLaunchConfig"
         },
         "MaxSize": {
-          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "maxInstances"  ]
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "maxInstances" ]
         },
         "MinSize": {
-          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "minInstances"  ]
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "minInstances" ]
         },
         "Tags": [
           {
@@ -187,7 +162,7 @@
           }
         ],
         "VPCZoneIdentifier": {
-          "Ref": "privateSubnet"
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "subnets" ]
         }
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup"
@@ -220,7 +195,7 @@
           }
         ],
         "Subnets": {
-          "Ref": "privateSubnet"
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "subnets" ]
         },
         "Tags": [
           {
@@ -379,7 +354,7 @@
           "Ref": "InstanceProfile"
         },
         "ImageId": {
-          "Fn::FindInMap": [ "InstanceMappings", "controller", "imageId"  ]
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "imageId" ]
         },
         "InstanceType": {
           "Ref": "controllerInstanceType"
@@ -393,10 +368,12 @@
           }
         ],
         "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash \n",
           "/usr/local/bin/attach_ebs.py $(ec2metadata --instance-id) ", { "Ref": "RedisEBS" }
         ]] }}
       },
-      "Type": "AWS::AutoScaling::LaunchConfiguration"
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "DependsOn": "RedisEBS"
 
     },
     "DockerhostsLaunchConfig": {
@@ -406,7 +383,7 @@
           "Ref": "InstanceProfile"
         },
         "ImageId": {
-          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "imageId"  ]
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "imageId" ]
         },
         "InstanceType": {
           "Ref": "dockerInstanceType"

@@ -9,7 +9,9 @@ then
     echo 'Disk already has a partition'
 else
     echo 'Need to create partition'
-    sfdisk /dev/xvdh < /tmp/redis.partition
+    sfdisk /dev/xvdh < /root/redis.partition
+    sleep 10
+    mkfs.ext4 /dev/xvdh1
 fi
 
 if [ -d $MNT_POINT ];
@@ -26,4 +28,7 @@ if [ $check_mnt -eq 1 ];
 then
     echo 'Mounting ...'
     mount -t ext4 /dev/xvdh1 $MNT_POINT
+    service redis-server restart
+else
+    echo 'Nothing to do'
 fi
