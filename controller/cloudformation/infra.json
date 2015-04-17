@@ -21,11 +21,13 @@
     "controllerInstanceType": {
       "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
       "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
+      "Default": "m3.medium",
       "Type": "String"
     },
     "dockerInstanceType": {
       "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
       "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
+      "Default": "m3.xlarge",
       "Type": "String"
     }
   },
@@ -380,7 +382,7 @@
           "Fn::FindInMap": [ "InstanceMappings", "controller", "imageId"  ]
         },
         "InstanceType": {
-          "Fn::FindInMap": [ "InstanceMappings", "controller", "instanceType"  ]
+          "Ref": "controllerInstanceType"
         },
         "KeyName": {
           "Ref": "keyName"
@@ -405,7 +407,7 @@
           "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "imageId"  ]
         },
         "InstanceType": {
-          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "instanceType"  ]
+          "Ref": "dockerInstanceType"
         },
         "KeyName": {
           "Ref": "keyName"
@@ -450,8 +452,9 @@
                 },
                 {
                   "Action": [
-                    "ec2:AssociateAddress",
-                    "ec2:DescribeAddresses"
+                    "ec2:AttachVolume",
+                    "ec2:DescribeVolumes",
+                    "ec2:DescribeVolumeStatus"
                   ],
                   "Effect": "Allow",
                   "Resource": "*"
@@ -464,6 +467,30 @@
         ]
       },
       "Type": "AWS::IAM::Role"
+    },
+    "RedisEBSA": {
+      "Type" : "AWS::EC2::Volume",
+      "Properties" : {
+        "Size" : "10",
+        "VolumeType" : "standard",
+        "AvailabilityZone" : "eu-west-1a"
+      }
+    },
+    "RedisEBSB": {
+      "Type" : "AWS::EC2::Volume",
+      "Properties" : {
+        "Size" : "10",
+        "VolumeType" : "standard",
+        "AvailabilityZone" : "eu-west-1b"
+      }
+    },
+    "RedisEBSC": {
+      "Type" : "AWS::EC2::Volume",
+      "Properties" : {
+        "Size" : "10",
+        "VolumeType" : "standard",
+        "AvailabilityZone" : "eu-west-1c"
+      }
     }
   }
 }
