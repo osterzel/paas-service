@@ -12,8 +12,16 @@ echo "deb https://get.docker.com/ubuntu docker main" > /etc/apt/sources.list.d/d
 
 apt-get update
 apt-get --force-yes -fy install lxc-docker-1.5.0 nginx
+apt-get install -fy python-pip
+
+pip install boto==2.38.0
 
 adduser www-data docker
+
+if [ -d /tmp/files ]
+then
+   mv /tmp/files /opt/files
+fi
 
 rm -f /etc/nginx/sites-enabled/default
 
