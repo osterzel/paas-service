@@ -9,7 +9,7 @@ then
     echo 'Disk already has a partition'
 else
     echo 'Need to create partition'
-    sfdisk /dev/xvdh < redis.partition
+    sfdisk /dev/xvdh < /tmp/redis.partition
 fi
 
 if [ -d $MNT_POINT ];
