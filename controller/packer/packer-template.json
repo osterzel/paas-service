@@ -29,6 +29,21 @@
   ],
   "provisioners": [
     {
+      "type": "file",
+      "source": "attach_ebs.py",
+      "destination": "/usr/local/bin/"
+    },
+    {
+      "type": "file",
+      "source": "mount_ebs.sh",
+      "destination": "/usr/local/bin/"
+    },
+    {
+      "type": "file",
+      "source": "redis.partition",
+      "destination": "/tmp/"
+    },
+    {
       "type": "shell",
       "scripts": [
         "scripts/install.sh"
@@ -42,12 +57,12 @@
     }
   ],
   "post-processors" : [
-	{
-                "type": "vagrant",
-                "only": ["amazon-ebs"],
-                "compression_level" : 1,
-                "output": "paas-controller-{{timestamp}}.box",
-                "keep_input_artifact": true
-	}
+    {
+      "type": "vagrant",
+      "only": ["amazon-ebs"],
+      "compression_level" : 1,
+      "output": "paas-controller-{{timestamp}}.box",
+      "keep_input_artifact": true
+    }
   ]
 }

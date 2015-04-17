@@ -8,6 +8,10 @@ echo "deb https://get.docker.com/ubuntu docker main" > /etc/apt/sources.list.d/d
 
 apt-get update
 apt-get -fy install lxc-docker redis-server rabbitmq-server
+apt-get install -fy python-pip
+
+pip install boto==2.38.0
+
 
 #Change redis bind address
 sed -i s/"bind 127.0.0.1"/"#bind 127.0.0.1"/g /etc/redis/redis.conf
