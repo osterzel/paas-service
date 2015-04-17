@@ -30,17 +30,17 @@
   "provisioners": [
     {
       "type": "file",
-      "source": "attach_ebs.py",
+      "source": "files/attach_ebs.py",
       "destination": "/usr/local/bin/"
     },
     {
       "type": "file",
-      "source": "mount_ebs.sh",
+      "source": "files/mount_ebs.sh",
       "destination": "/usr/local/bin/"
     },
     {
       "type": "file",
-      "source": "redis.partition",
+      "source": "files/redis.partition",
       "destination": "/tmp/"
     },
     {
