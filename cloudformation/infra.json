@@ -272,10 +272,17 @@
             "ToPort": "22"
           },
           {
-            "CidrIp": "10.0.0.0/8",
+            "CidrIp": "10.0.0.0/8"
+            "SourceSecurityGroupId": {
             "FromPort": "5672",
             "IpProtocol": "tcp",
             "ToPort": "5672"
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "8000",
+            "IpProtocol": "tcp",
+            "ToPort": "8000"
           },
           {
             "CidrIp": "10.0.0.0/8",
