@@ -69,6 +69,11 @@ Feature: application lifecycle
         And I am eventually able to access the site on "testapp.domain.com"
         And I get an application json document for "testapp" with environment variable "TEST_VARIABLE" and value "test_with_1_containers"
 
+    Scenario: read from events endpoint
+        Give I have a paas api service
+        When I requests the events for "testapp"
+        Then I get an event document with a "CREATE" event
+
     Scenario: delete an application
 	     Given I have a paas api service
 	     When I delete an application "testapp"	

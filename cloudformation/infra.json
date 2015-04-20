@@ -1,0 +1,459 @@
+{
+  "Parameters": {
+    "environment": {
+      "AllowedPattern": "^[a-z0-9]+$",
+      "Description": "Name of the environment in lower-case (e.g. 'tomy', 'ci', 'aslive' or 'production' - /^[a-z0-9]+$/).",
+      "Type": "String"
+    },
+    "keyName": {
+      "Description": "SSH key name for accessing the instances.",
+      "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+    "vpc": {
+      "Description": "The id of the VPC that this should be launched into (/^vpc-[0-9a-f]+$/).",
+      "Type": "AWS::EC2::VPC::Id"
+    },
+    "controllerInstanceType": {
+      "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
+      "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
+      "Default": "m3.medium",
+      "Type": "String"
+    },
+    "dockerInstanceType": {
+      "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
+      "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
+      "Default": "m3.xlarge",
+      "Type": "String"
+    }
+  },
+  "Mappings": {
+    "InstanceMappings": {
+      "controller": {
+        "imageId": "ami-c1ee8eb6",
+        "instanceType": "m3.medium",
+        "maxInstances": "1",
+        "minInstances": "1",
+        "subnets": ["subnet-72852a05"]
+      },
+      "dockerhosts": {
+        "imageId": "ami-c1ee8eb6",
+        "instanceType": "m3.xlarge",
+        "maxInstances": "3",
+        "minInstances": "3",
+        "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
+      }
+    }
+  },
+  "Resources": {
+    "ControllerASG": {
+      "Properties": {
+        "AvailabilityZones": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "a"
+              ]
+            ]
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "ControllerLaunchConfig"
+        },
+        "LoadBalancerNames": [
+          {
+            "Ref": "ELB"
+          }
+        ],
+        "MaxSize": {
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "maxInstances"  ]
+        },
+        "MinSize": {
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "minInstances"  ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "PropagateAtLaunch": true,
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS-controller"
+                ]
+              ]
+            }
+          }
+        ],
+        "VPCZoneIdentifier": {
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "subnets"]
+        }
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup"
+    },
+
+    "DockerASG": {
+      "Properties": {
+        "AvailabilityZones": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "a"
+              ]
+            ]
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "b"
+              ]
+            ]
+          },
+          {
+            "Fn::Join": [
+              "",
+              [
+                {
+                  "Ref": "AWS::Region"
+                },
+                "c"
+              ]
+            ]
+          }
+        ],
+        "LaunchConfigurationName": {
+          "Ref": "DockerhostsLaunchConfig"
+        },
+        "MaxSize": {
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "maxInstances" ]
+        },
+        "MinSize": {
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "minInstances" ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "PropagateAtLaunch": true,
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS-dockerhosts"
+                ]
+              ]
+            }
+          }
+        ],
+        "VPCZoneIdentifier": {
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "subnets" ]
+        }
+      },
+      "Type": "AWS::AutoScaling::AutoScalingGroup"
+    },
+    "ELB": {
+      "Properties": {
+        "ConnectionDrainingPolicy": {
+          "Enabled": true,
+          "Timeout": 10
+        },
+        "CrossZone": "true",
+        "HealthCheck": {
+          "HealthyThreshold": 2,
+          "Interval": 5,
+          "Target": "TCP:80",
+          "Timeout": 4,
+          "UnhealthyThreshold": 2
+        },
+        "Listeners": [
+          {
+            "InstancePort": "80",
+            "InstanceProtocol": "HTTP",
+            "LoadBalancerPort": "80",
+            "Protocol": "HTTP"
+          }
+        ],
+        "SecurityGroups": [
+          {
+            "Ref": "ELBSecurityGroup"
+          }
+        ],
+        "Subnets": {
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "subnets" ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS Controller load balancer"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+    },
+    "ELBSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "Security group to identify traffic from the load balancer",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.169.0.0/21",
+            "FromPort": "80",
+            "IpProtocol": "tcp",
+            "ToPort": "80"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS",
+                  "load balancer security group"
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "vpc"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "InstanceProfile": {
+      "Properties": {
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "Role"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::InstanceProfile"
+    },
+    "ControllerSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "Security group to protect the EC2 instances",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "22",
+            "IpProtocol": "tcp",
+            "ToPort": "22"
+          },
+          {
+            "FromPort": "80",
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Ref": "ELBSecurityGroup"
+            },
+            "ToPort": "80"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS controller",
+                  "security group"
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "vpc"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "DockerHostsSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "Security group to protect the EC2 instances",
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "22",
+            "IpProtocol": "tcp",
+            "ToPort": "22"
+          },
+          {
+            "FromPort": "80",
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Ref": "ControllerSecurityGroup"
+            },
+            "ToPort": "80"
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS controller",
+                  "security group"
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "vpc"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+
+
+    "ControllerLaunchConfig": {
+      "Properties": {
+        "AssociatePublicIpAddress": "false",
+        "IamInstanceProfile": {
+          "Ref": "InstanceProfile"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [ "InstanceMappings", "controller", "imageId" ]
+        },
+        "InstanceType": {
+          "Ref": "controllerInstanceType"
+        },
+        "KeyName": {
+          "Ref": "keyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "ControllerSecurityGroup"
+          }
+        ],
+        "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+          "#!/bin/bash \n",
+          "/usr/local/bin/attach_ebs.py $(ec2metadata --instance-id) ", { "Ref": "RedisEBS" }
+        ]] }}
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "DependsOn": "RedisEBS"
+
+    },
+    "DockerhostsLaunchConfig": {
+      "Properties": {
+        "AssociatePublicIpAddress": "false",
+        "IamInstanceProfile": {
+          "Ref": "InstanceProfile"
+        },
+        "ImageId": {
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "imageId" ]
+        },
+        "InstanceType": {
+          "Ref": "dockerInstanceType"
+        },
+        "KeyName": {
+          "Ref": "keyName"
+        },
+        "SecurityGroups": [
+          {
+            "Ref": "DockerHostsSecurityGroup"
+          }
+        ]
+
+      },
+      "Type": "AWS::AutoScaling::LaunchConfiguration"
+
+    },
+    "Role": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sts:AssumeRole"
+              ],
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "ec2.amazonaws.com"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Path": "/",
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": "elasticloadbalancing:DescribeInstanceHealth",
+                  "Effect": "Allow",
+                  "Resource": "*"
+                },
+                {
+                  "Action": [
+                    "ec2:AttachVolume",
+                    "ec2:DescribeVolumes",
+                    "ec2:DescribeVolumeStatus"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "*"
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "Policy"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    },
+    "RedisEBS": {
+      "Type" : "AWS::EC2::Volume",
+      "Properties" : {
+        "Size" : "10",
+        "VolumeType" : "standard",
+        "AvailabilityZone" : "eu-west-1a"
+      }
+    }
+  }
+}

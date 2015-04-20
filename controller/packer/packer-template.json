@@ -2,7 +2,7 @@
   "variables": {
     "headless": "false",
     "output_dir": ".",
-    "source_ami": "ami-3532af42",
+    "source_ami": "ami-1dbbdc6a",
     "version": "{{ env `VERSION_STRING` }}",
     "NullHostName": "",
     "NullIdentityFile": "",
@@ -29,6 +29,11 @@
   ],
   "provisioners": [
     {
+      "type": "file",
+      "source": "files/",
+      "destination": "/tmp/"
+    },
+    {
       "type": "shell",
       "scripts": [
         "scripts/install.sh"
@@ -42,12 +47,12 @@
     }
   ],
   "post-processors" : [
-	{
-                "type": "vagrant",
-                "only": ["amazon-ebs"],
-                "compression_level" : 1,
-                "output": "paas-controller-{{timestamp}}.box",
-                "keep_input_artifact": true
-	}
+    {
+      "type": "vagrant",
+      "only": ["amazon-ebs"],
+      "compression_level" : 1,
+      "output": "paas-controller-{{timestamp}}.box",
+      "keep_input_artifact": true
+    }
   ]
 }
