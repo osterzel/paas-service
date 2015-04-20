@@ -272,6 +272,13 @@
             "ToPort": "22"
           },
           {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "5672",
+            "IpProtocol": "tcp",
+            "ToPort": "5672"
+          },
+
+          {
             "FromPort": "80",
             "IpProtocol": "tcp",
             "SourceSecurityGroupId": {
@@ -314,6 +321,12 @@
             "ToPort": "22"
           },
           {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "4243",
+            "IpProtocol": "tcp",
+            "ToPort": "4243"
+          },
+          {
             "FromPort": "80",
             "IpProtocol": "tcp",
             "SourceSecurityGroupId": {
@@ -332,7 +345,7 @@
                   {
                     "Ref": "environment"
                   },
-                  "PaaS controller",
+                  "PaaS Docker",
                   "security group"
                 ]
               ]
