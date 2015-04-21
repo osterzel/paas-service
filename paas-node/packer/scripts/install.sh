@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -e
 
 #Check if docker already installed and exit
 DOCKER_EXISTS=`dpkg -l | grep lxc-docker`
@@ -14,7 +14,12 @@ apt-get update
 apt-get --force-yes -fy install lxc-docker-1.5.0 nginx
 apt-get install -fy python-pip
 
+if [ ! -x /usr/bin/pip ];
+then
+    apt-get update && apt-get install -xy python-pip
+fi
 pip install boto==2.38.0
+
 
 # Move EBS scripts to their place with the right mode
 mv /tmp/files/attach_ebs.py /usr/local/bin/attach_ebs.py
