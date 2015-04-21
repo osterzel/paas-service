@@ -12,6 +12,7 @@ echo "deb https://get.docker.com/ubuntu docker main" > /etc/apt/sources.list.d/d
 
 apt-get update
 apt-get --force-yes -fy install lxc-docker-1.5.0 nginx
+apt-get update
 apt-get install -fy python-pip
 
 pip install boto==2.38.0
@@ -25,6 +26,9 @@ chmod 0755 /usr/local/bin/attach_ebs.py
 chmod 0755 /usr/local/bin/mount_ebs.sh
 
 adduser www-data docker
+
+#Fetch image
+docker pull flynn/slugrunner
 
 if [ -d /tmp/files ]
 then
