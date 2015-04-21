@@ -16,6 +16,14 @@ apt-get install -fy python-pip
 
 pip install boto==2.38.0
 
+# Move EBS scripts to their place with the right mode
+mv /tmp/files/attach_ebs.py /usr/local/bin/attach_ebs.py
+mv /tmp/files/mount_ebs.sh /usr/local/bin/mount_ebs.sh
+mv /tmp/files/redis.partition /root
+
+chmod 0755 /usr/local/bin/attach_ebs.py
+chmod 0755 /usr/local/bin/mount_ebs.sh
+
 adduser www-data docker
 
 if [ -d /tmp/files ]
