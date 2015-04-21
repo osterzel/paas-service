@@ -24,24 +24,30 @@
       "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
       "Default": "m3.xlarge",
       "Type": "String"
+    },
+    "ImageId": {
+      "Description": "AMI id. This will be used for controller and docker boxes",
+      "Type": "String",
+      "Default": "ami-b3395bc4"
     }
   },
   "Mappings": {
     "InstanceMappings": {
       "controller": {
-        "imageId": "ami-c1ee8eb6",
         "instanceType": "m3.medium",
         "maxInstances": "1",
         "minInstances": "1",
         "subnets": ["subnet-72852a05"]
       },
       "dockerhosts": {
-        "imageId": "ami-c1ee8eb6",
         "instanceType": "m3.xlarge",
         "maxInstances": "3",
         "minInstances": "3",
         "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
       }
+    },
+    "CustomVariables": {
+      "deployUserScript": { "Value": "useradd -G docker -s /bin/bash -m deploy; su - deploy -c \"mkdir -p .ssh; echo \"\"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDHKthjC8aqnw8U5qlTh57OQoUcVYsnDtiKE0T1ufDFnaBMFmSy0ysrI0jZQCZVihTFvOJ5t+zyKvqwQovRPapY299KmgAt/nHYtipm7OnvXN01NOb1Y70AEAavw5nID3Sn4FYH6VUvvkaf6K1NKKtSrMNrLJbm4spC19c1eogmCp5GlRF+rHRSPb3JRHPuyoEht3OslxiBfxT1oLLaWZAZ7AJw9CL3DAf98ORJN2HocNr3Tj59dMG28PGl2i1xkOHn7rpvU6eqeedjtqiotTcaaa98oz8S5PQgzISXoSSP0cZRctEx+qoDtI6ZiZavYh874EYHI2DIsFhNoQwm2h6t\"\" > .ssh/authorized_keys ; chmod 0700 .ssh; chmod 0600 .ssh/authorized_keys\"" }
     }
   },
   "Resources": {
@@ -379,7 +385,7 @@
           "Ref": "InstanceProfile"
         },
         "ImageId": {
-          "Fn::FindInMap": [ "InstanceMappings", "controller", "imageId" ]
+          "Ref": "ImageId"
         },
         "InstanceType": {
           "Ref": "controllerInstanceType"
@@ -393,8 +399,14 @@
           }
         ],
         "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
-          "#!/bin/bash \n",
-          "/usr/local/bin/attach_ebs.py $(ec2metadata --instance-id) ", { "Ref": "RedisEBS" }
+          "#!/bin/bash\n",
+          "/usr/local/bin/attach_ebs.py $(ec2metadata --instance-id) ", { "Ref": "RedisEBS" } , "\n",
+          "pip install cli53\n",
+          "cli53 rrcreate mergermarket.it controller.", { "Ref": "environment"} ," A $(ec2metadata --local-ipv4) --replace --ttl 60\n",
+          {
+            "Fn::FindInMap": [ "CustomVariables", "deployUserScript", "Value" ]
+
+          }
         ]] }}
       },
       "Type": "AWS::AutoScaling::LaunchConfiguration",
@@ -408,7 +420,7 @@
           "Ref": "InstanceProfile"
         },
         "ImageId": {
-          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "imageId" ]
+          "Ref": "ImageId"
         },
         "InstanceType": {
           "Ref": "dockerInstanceType"
@@ -420,7 +432,13 @@
           {
             "Ref": "DockerHostsSecurityGroup"
           }
-        ]
+        ],
+        "UserData": {"Fn::Base64": {"Fn::Join": ["", [
+          "#!/bin/bash\n",
+          {
+            "Fn::FindInMap": ["CustomVariables", "deployUserScript", "Value"]
+          }
+        ]]}}
 
       },
       "Type": "AWS::AutoScaling::LaunchConfiguration"
@@ -462,6 +480,29 @@
                   ],
                   "Effect": "Allow",
                   "Resource": "*"
+                },
+                {
+                  "Action": [
+                    "route53:ChangeResourceRecordSets",
+                    "route53:GetHostedZone",
+                    "route53:ListResourceRecordSets"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": "arn:aws:route53:::hostedzone/Z3OTMN2JUY5IS5"
+                },
+                {
+                  "Action": [
+                    "route53:GetChange"
+                  ],
+                  "Resource": "arn:aws:route53:::change/*",
+                  "Effect": "Allow"
+                },
+                {
+                  "Action": [
+                    "route53:ListHostedZones"
+                  ],
+                  "Resource": "*",
+                  "Effect": "Allow"
                 }
               ],
               "Version": "2012-10-17"
