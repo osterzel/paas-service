@@ -267,8 +267,30 @@
       },
       "Type": "AWS::IAM::InstanceProfile"
     },
+
     "ControllerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
+        "VpcId": {
+          "Ref": "vpc"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS controller",
+                  "security group"
+                ]
+              ]
+            }
+          }
+        ],
         "GroupDescription": "Security group to protect the EC2 instances",
         "SecurityGroupIngress": [
           {
@@ -304,55 +326,17 @@
             },
             "ToPort": "80"
           }
-        ],
-        "Tags": [
-          {
-            "Key": "Name",
-            "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS controller",
-                  "security group"
-                ]
-              ]
-            }
-          }
-        ],
-        "VpcId": {
-          "Ref": "vpc"
-        }
-      },
-      "Type": "AWS::EC2::SecurityGroup"
+        ]
+      }
     },
+
     "DockerHostsSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
       "Properties": {
         "GroupDescription": "Security group to protect the EC2 instances",
-        "SecurityGroupIngress": [
-          {
-            "CidrIp": "10.0.0.0/8",
-            "FromPort": "22",
-            "IpProtocol": "tcp",
-            "ToPort": "22"
-          },
-          {
-            "CidrIp": "10.0.0.0/8",
-            "FromPort": "4243",
-            "IpProtocol": "tcp",
-            "ToPort": "4243"
-          },
-          {
-            "FromPort": "80",
-            "IpProtocol": "tcp",
-            "SourceSecurityGroupId": {
-              "Ref": "ControllerSecurityGroup"
-            },
-            "ToPort": "80"
-          }
-        ],
+        "VpcId": {
+          "Ref": "vpc"
+        },
         "Tags": [
           {
             "Key": "Name",
@@ -370,13 +354,41 @@
             }
           }
         ],
-        "VpcId": {
-          "Ref": "vpc"
-        }
-      },
-      "Type": "AWS::EC2::SecurityGroup"
+        "SecurityGroupIngress": [
+          {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "22",
+            "IpProtocol": "tcp",
+            "ToPort": "22"
+          },
+          {
+            "CidrIp": "10.0.0.0/8",
+            "FromPort": "4243",
+            "IpProtocol": "tcp",
+            "ToPort": "4243"
+          },
+          {
+            "FromPort": "0",
+            "ToPort": "65535",
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Ref": "ControllerSecurityGroup"
+            }
+          }
+        ]
+      }
     },
-
+    "DockerHostsSecurityGroupIngress": {
+      "Type" : "AWS::EC2::SecurityGroupIngress",
+      "Properties": {
+        "GroupId": { "Ref": "DockerHostsSecurityGroup" },
+        "IpProtocol": "tcp",
+        "FromPort": "0",
+        "ToPort": "65535",
+        "SourceSecurityGroupId": { "Ref": "DockerHostsSecurityGroup" }
+      },
+      "DependsOn": "DockerHostsSecurityGroup"
+    },
 
     "ControllerLaunchConfig": {
       "Properties": {
