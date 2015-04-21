@@ -28,6 +28,9 @@ router-docker:
 save-docker: controller-docker router-docker
 	docker save -o controller-$(version).tgz paas-controller:$(version)
 	docker save -o router-$(version).tgz paas-router:$(version)
+	docker rmi paas-controller:$(version)
+	docker rmi paas-router:$(version)
+
 
 vagrant:
 	vagrant up
