@@ -17,8 +17,8 @@ Feature: application lifecycle
 
     Scenario: change application docker image
         Given I have a paas api service
-        When I set variable "docker_image" to "flynn/slugrunner" for application "testapp"
-        Then I get an application json document for "testapp" with variable "docker_image" and value "flynn/slugrunner"
+        When I set variable "docker_image" to "flynn/slugrunner:latest" for application "testapp"
+        Then I get an application json document for "testapp" with variable "docker_image" and value "flynn/slugrunner:latest"
 
     Scenario: change application command
         Given I have a paas api service

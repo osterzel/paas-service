@@ -32,14 +32,6 @@ chmod 0755 /usr/local/bin/mount_ebs.sh
 
 adduser www-data docker
 
-#Fetch image
-docker pull flynn/slugrunner
-
-if [ -d /tmp/files ]
-then
-   mv /tmp/files /opt/files
-fi
-
 rm -f /etc/nginx/sites-enabled/default
 
 cat <<EOF > /etc/nginx/sites-enabled/docker.conf

@@ -154,8 +154,13 @@ class DockerFunctions():
             #Check if the container exists on the machine otherwise pull it
             try:
                 r = c.inspect_image(docker_image)
-            except docker.ApiError:
-                write_event("START_CONTAINER", "Docker image {} did not exist on node".format(), self.app)
+            except docker.errors.APIError:
+                write_event("START_CONTAINER", "Docker image {} did not exist on node".format(docker_image), self.app)
+		self.logger.info("Docker image {} does not exist downloading".format(docker_image))
+		for line in c.pull(docker_image, stream=True):
+			pass	
+                write_event("START_CONTAINER", "Docker image {} downloaded to node".format(docker_image), self.app)
+		self.logger.info("Docker image {} download complete")
             r = c.create_container(docker_image, command, ports={"{}/tcp".format(port): {}}, environment=dict( environment.items() + {"PORT": port}.items()), mem_limit=memory, name="{}_{}_{}".format(self.app, app_type, port))
 
             c.start(r['Id'], port_bindings={"{}/tcp".format(port): port})
