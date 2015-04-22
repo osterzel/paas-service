@@ -16,13 +16,13 @@
     "controllerInstanceType": {
       "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
       "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
-      "Default": "m3.medium",
+      "Default": "m3.large",
       "Type": "String"
     },
     "dockerInstanceType": {
       "AllowedPattern": "^[a-z0-9]+\\.[a-z0-9]+$",
       "Description": "The EC2 instance type e.g. m3.medium (/^[a-z0-9]+\\.[a-z0-9]+$/).",
-      "Default": "m3.xlarge",
+      "Default": "m3.large",
       "Type": "String"
     },
     "ImageId": {
@@ -34,13 +34,11 @@
   "Mappings": {
     "InstanceMappings": {
       "controller": {
-        "instanceType": "m3.medium",
         "maxInstances": "1",
         "minInstances": "1",
         "subnets": ["subnet-72852a05"]
       },
       "dockerhosts": {
-        "instanceType": "m3.xlarge",
         "maxInstances": "3",
         "minInstances": "3",
         "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
