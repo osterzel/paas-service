@@ -38,4 +38,4 @@ vagrant:
 
 clean:
 	cd paas-node; make clean
-	rm -f venv
+	rm -rf venv
