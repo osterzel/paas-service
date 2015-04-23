@@ -447,7 +447,9 @@
           "#!/bin/bash\n",
           {
             "Fn::FindInMap": ["CustomVariables", "deployUserScript", "Value"]
-          }
+          },
+          "\n",
+          "mount -t ext3 /dev/xvdb /var/lib/docker && service docker restart"
         ]]}}
 
       },
