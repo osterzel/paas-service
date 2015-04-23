@@ -33,9 +33,9 @@ save-docker: controller-docker router-docker
 
 
 vagrant:
-	vagrant up
-	vagrant ssh -c 'sudo /services/paas-node/packer/scripts/install.sh'
-	vagrant ssh -c 'sudo /services/scripts/configure-services.sh'
+	cd paas-node; make local
+	cd paas-node; vagrant ssh -c 'sudo /services/scripts/configure-services.sh'
 
 clean:
-	vagrant destroy -f
+	cd paas-node; make clean
+	rm -rf venv

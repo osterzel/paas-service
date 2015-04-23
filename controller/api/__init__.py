@@ -40,7 +40,7 @@ def api_postprocessing(response):
 paas_api = restful.Api(api, default_mediatype = 'application/json', catch_all_404s=True)
 
 def validate_json(request):
-        if request.headers['Content-type'] != 'application/json':
+	if not "application/json" in request.headers['Content-type']:
             restful.abort(400, message = 'Content-type must be application/json')
 
         try:

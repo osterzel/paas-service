@@ -11,13 +11,17 @@ endif
 
 .PHONY: clean tests
 
-tests: venv
-	venv/bin/pip install -Uqr requirements-tests.txt	
-	test -d target || mkdir target
-	. venv/bin/activate; nosetests --with-xunit --xunit-file=target/nosetests.xml --with-xcover --xcoverage-file=target/coverage/coverage.xml --cover-erase --cover-html-dir=target/coverage --cover-html --cover-package=scheduler,api,web,monitor,server
+local: packerinstall .vagrantup 
+	packer build -only test \
+		$$(vagrant ssh-config | perl -ne 'print " -var Null$$1=$$2" if /(User|Port|HostName|IdentityFile) (\S+)/') \
+                packer-template.json
+
+.vagrantup: Vagrantfile
+	vagrant up
+	touch .vagrantup
 
 ami: packerinstall
-	PATH=$(PATH); cd packer; pwd; packer build -only amazon-ebs packer-template.json
+	PATH=$(PATH); packer build -only amazon-ebs packer-template.json
 
 packerinstall:
 ifeq ($(wildcard $(ROOT_DIR)/output/packer_util),)
@@ -31,3 +35,4 @@ endif
 
 clean:
 	rm -rf output
+	vagrant destroy -f && rm -f .vagrantup
