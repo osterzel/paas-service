@@ -4,6 +4,15 @@ import os
 from flask import Flask
 from web import admin_web
 from api import api
+import logging
+
+import gevent
+import gevent.monkey
+from gevent import queue
+from gevent.pywsgi import WSGIServer
+from common.logger import ConsoleLogger
+
+gevent.monkey.patch_all()
 
 app = Flask(__name__)
 
@@ -20,5 +29,10 @@ if __name__ == '__main__':
         port = 8000
 
     host = '0.0.0.0'
+    logger = ConsoleLogger().getLogger()
+    logger.info("Starting PAAS Controller")
 
-    app.run(host=host, port=port, debug=True)
+    http = WSGIServer((host, port), app)
+    http.serve_forever()
+
+    #app.run(host=host, port=port, debug=True)

@@ -13,26 +13,26 @@ import requests
 from common.paasevents import write_event, get_events
 import common.exceptions as exceptions
 from common.datastore import Redis
+import logging
 
 class Applications(object):
 
     def __init__(self):
-	self.redis_conn = Redis().getConnection()
+        self.logger = logging.getLogger(__name__)
+        self.redis_conn = Redis().getConnection()
 
     def get_all(self):
         applications = list(self.redis_conn.smembers("apps"))
+        self.logger.debug("Getting application record")
         return { "data": applications }
 
     def get(self, name, containers=True):
         app_details = self.redis_conn.hgetall("app#{}".format(name))
         if not app_details:
-            raise Exception
+            raise Exception("Application not found")
 
         app_details['environment'] = self.redis_conn.hgetall("global:environment")
         app_details["environment"].update(self.redis_conn.hgetall("{}:environment".format(name)))
-
-        if ( self.redis_conn.hgetall("global:environment")):
-            app_details["global_environment"] = self.redis_conn.hgetall("global:environment")
 
         if "memory_in_mb" in app_details:
             app_details["memory_in_mb"] = str(app_details["memory_in_mb"])
@@ -43,12 +43,15 @@ class Applications(object):
         if containers == True:
             containers = []
             for host in self.redis_conn.smembers("hosts"):
-                c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
-                find_containers = c.containers()
-                for container in find_containers:
-                        if name in str(container['Names']) and any(match in str(container['Names']) for match in [ '_web_', '_weburlcheck_' ]):
-                            port = container['Names'][0].split('_')[-1]
-                            containers.append("{}:{}".format(host, port))
+                try:
+                    c = docker.Client(base_url="http://{}:4243".format(host), version="1.12")
+                    find_containers = c.containers()
+                    for container in find_containers:
+                            if name in str(container['Names']) and any(match in str(container['Names']) for match in [ '_web_', '_weburlcheck_' ]):
+                                port = container['Names'][0].split('_')[-1]
+                                containers.append("{}:{}".format(host, port))
+                except:
+                    self.logger.info("Unable to communicate with docker node while requesting application containers")
 
             app_details['containers'] = containers
 
@@ -71,7 +74,7 @@ class Applications(object):
 
         grabbed_name = self.redis_conn.hsetnx("app#{}".format(name), "created_at", datetime.now().isoformat())
         if not grabbed_name:
-            raise exceptions.ApplicationExists
+            raise exceptions.ApplicationExists("Application already exists")
 
         pipe = self.redis_conn.pipeline()
         pipe.hmset("app#{}".format(name),
@@ -79,7 +82,8 @@ class Applications(object):
                 "name": name, "type": "web", "docker_image": "", "state": "NEW", "memory_in_mb": "128", "command": "", "urls": name, "error_count": 0, "container_count": "2" })
         pipe.rpush("monitor", name)
         pipe.sadd("apps", name)
-        pipe.execute()
+        output = pipe.execute()
+        self.logger.debug("Application created, datastore output: {}".format(output))
         write_event("CREATE APP", "Create app - {}".format(name), name)
         return self.get(name)
 
