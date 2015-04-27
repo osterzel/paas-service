@@ -29,6 +29,7 @@ class Applications(object):
     def get(self, name, containers=True):
         app_details = self.redis_conn.hgetall("app#{}".format(name))
         if not app_details:
+            self.logger.info("Unable to fetch application {}".format(name))
             raise Exception("Application not found")
 
         app_details['environment'] = self.redis_conn.hgetall("global:environment")
