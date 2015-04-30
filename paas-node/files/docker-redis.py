@@ -13,7 +13,7 @@ if len(argv) <= 2:
 environment = argv[1]
 mode = argv[2]
 
-allowed_modes = ['self', 'controller']
+allowed_modes = ['self', 'controller', 'client']
 if mode not in allowed_modes:
     print('mode not allowed')
     raise KeyError
@@ -68,3 +68,5 @@ if __name__ == '__main__':
     if mode == 'self':
         add_member()
         remove_old_members()
+    if mode == 'client':
+        print(' '.join(get_instance_ips()))
