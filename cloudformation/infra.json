@@ -28,7 +28,7 @@
     "ImageId": {
       "Description": "AMI id. This will be used for controller and docker boxes",
       "Type": "String",
-      "Default": "ami-b3395bc4"
+      "Default": "ami-5d721f2a"
     }
   },
   "Mappings": {
@@ -304,6 +304,12 @@
             "ToPort": "5672"
           },
           {
+            "FromPort": "6379",
+            "ToPort": "6379",
+            "IpProtocol": "tcp",
+            "CidrIp": "10.0.0.0/8"
+          },
+          {
             "CidrIp": "10.0.0.0/8",
             "FromPort": "8000",
             "IpProtocol": "tcp",
@@ -449,12 +455,12 @@
             "Fn::FindInMap": ["CustomVariables", "deployUserScript", "Value"]
           },
           "\n",
-          "mount -t ext3 /dev/xvdb /var/lib/docker && service docker restart"
+          "service docker stop; umount -f /mnt; mkfs.ext4 /dev/xvdb; mount -t ext4 /dev/xvdb /var/lib/docker && service docker start\n",
+          "python /usr/local/bin/docker-redis.py ", { "Ref": "environment" }, " self"
         ]]}}
 
       },
       "Type": "AWS::AutoScaling::LaunchConfiguration"
-
     },
     "Role": {
       "Properties": {
@@ -492,6 +498,13 @@
                   ],
                   "Effect": "Allow",
                   "Resource": "*"
+                },
+                {
+                  "Effect": "Allow",
+                  "Resource": "*",
+                  "Action": [
+                    "ec2:DescribeInstances"
+                  ]
                 },
                 {
                   "Action": [
