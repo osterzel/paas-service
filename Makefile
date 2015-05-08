@@ -1,11 +1,13 @@
 version = dev
 
 
-localtest: vagrant test
+localtest: vagrant
+	venv/bin/pip install -Uqr requirements-test.txt
+	. venv/bin/activate; behave
 
 test: venv
 	venv/bin/pip install -Uqr requirements-test.txt
-	. venv/bin/activate; behave
+	. venv/bin/activate; behave --tags=-dev
 
 unittest:
 	cd controller; make test
