@@ -9,7 +9,7 @@ import time
 class Datastore(object):
     def __init__(self, db=0):
         self.config = Config()
-        self.engine = create_engine(self.config.sql_address)
+        self.engine = create_engine(self.config.sql_address, echo=True)
 
         #Now do some validation to confirm the schema we have in the database
         #The basic schema
