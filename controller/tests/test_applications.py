@@ -25,7 +25,7 @@ class TestApplication(unittest.TestCase):
             "memory_in_mb": "128",
             "command": "test command",
             "docker_image": "test/dockerimage",
-	    "type": "web"
+            "type": "web"
         }
 
     def tearDown(self):
@@ -68,7 +68,10 @@ class TestApplication(unittest.TestCase):
         self.assertEqual("NEW", output['state'])
         self.assertEqual("128", output['memory_in_mb'])
         self.assertEqual("testapplication", output['urls'])
-	self.assertEqual("web", output['type'])
+        self.assertEqual("web", output['type'])
+
+        output = self.application.get_all()
+        self.assertEquals({ "data": ["testapplication"] }, output)
 
         output = self.application.get(self.test_application)
         self.assertEqual(self.test_application, output['name'])
@@ -89,24 +92,24 @@ class TestApplication(unittest.TestCase):
         self.assertEqual(output['type'], self.update_record['type'])
 
     def test_invalid_slug_url(self):
-	output = self.setup_application_record()
+        output = self.setup_application_record()
 
-	with self.assertRaises(Exception) as context:
-		self.application.update_application(self.test_application, { "environment": { "SLUG_URL": "invalid_url" }})
-	self.assertRegexpMatches(context.exception.message, "Slug URL invalid_url is either invalid or inaccessible")
+        with self.assertRaises(Exception) as context:
+            self.application.update_application(self.test_application, { "environment": { "SLUG_URL": "invalid_url" }})
+        self.assertRegexpMatches(context.exception.message, "Slug URL invalid_url is either invalid or inaccessible")
 
     def test_application_restart(self):
-	output = self.setup_application_record()
+        output = self.setup_application_record()
 
-	self.assertEqual(output['name'], "testapplication")
+        self.assertEqual(output['name'], "testapplication")
 
-	output = self.application.update_application(self.test_application, { 'restart': 'true' })
-	self.assertEqual(output['environment']['RESTART'], '1')
+        output = self.application.update_application(self.test_application, { 'restart': 'true' })
+        self.assertEqual(output['environment']['RESTART'], '1', output)
 
-	output = self.application.update_application(self.test_application, { 'restart': 'true' })
-	self.assertEqual(output['environment']['RESTART'], '2')
+        output = self.application.update_application(self.test_application, { 'restart': 'true' })
+        self.assertEqual(output['environment']['RESTART'], '2')
 
-	
+
 
 
 

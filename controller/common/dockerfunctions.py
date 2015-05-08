@@ -103,14 +103,24 @@ class DockerFunctions():
         return True
 
     def container_logs(self):
+        def generate(logs):
+            for row in logs:
+                print row
+                yield row
+
         application_logs = {}
         nodes = self.list_nodes()
+        c = {}
         for node in nodes:
-            c = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
+            c[node] = docker.Client(base_url="http://{}:4243".format(node), version="1.12")
             for container in nodes[node]:
                 print container
-                application_logs[container[:8]] = (c.logs(container = container, timestamps=True, stream=True))
-            c.close()
+                print node
+                connection = docker.Client(base_url="http://{}:4243".format(node), version="1.16")
+                generate(connection.logs(container = container, timestamps=True, stream=True, tail=20))
+                application_logs[container[:8]] = (connection.logs(container = container, timestamps=True, stream=True, tail=20))
+
+                connection.close()
 
         return application_logs
 

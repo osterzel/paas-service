@@ -5,60 +5,64 @@ import time
 
 @given('I have a paas api service')
 def step_impl(context):
-	response = context.web_requests.get(context.api_url + "/app/", verify=False)
-	assert_that(response.status_code, equal_to(200))
+    response = context.web_requests.get(context.api_url + "/app/", verify=False)
+    assert_that(response.status_code, equal_to(200))
 
 @when('I create an application "{application}"')
 def step_impl(context, application):
-	payload = { "name": application }
-	headers = { "Content-type": "application/json" }
-	context.response = context.web_requests.post(context.api_url + '/app/', data=json.dumps(payload), headers=headers) 
-	assert_that(context.response.status_code, equal_to(201), context.response.text)
+    payload = { "name": application }
+    headers = { "Content-type": "application/json" }
+    context.response = context.web_requests.post(context.api_url + '/app/', data=json.dumps(payload), headers=headers)
+    assert_that(context.response.status_code, equal_to(201), context.response.text)
 
 @then('I get an application json document for "{application}" with variable "{variable}" and value "{value}"')
 def step_impl(context, application, variable, value):
-	data = context.response.json()
-	assert_that(data, has_entry(variable, value))
+    data = context.response.json()
+    assert_that(data, has_entry(variable, value))
 
 @then('I get an application json document for "{application}" with environment variable "{variable}" and value "{value}"')
 def step_impl(context, application, variable, value):
-	data = context.response.json()
-	assert_that(data['environment'], has_entry(variable, value))
+    data = context.response.json()
+    assert_that(data['environment'], has_entry(variable, value))
 
 @when('I set environment variable "{variable}" to "{value}" for application "{application}"')
 def step_impl(context, variable, value, application):
-	headers = { "Content-type": "application/json" }
-	payload = { "environment": { variable: value } } 
-	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
-	assert_that(context.response.status_code, equal_to(201))
+    headers = { "Content-type": "application/json" }
+    payload = { "environment": { variable: value } }
+    context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+    assert_that(context.response.status_code, equal_to(201))
 
 @when('I set variable "{variable}" to "{value}" for application "{application}"')
 def step_impl(context, variable, value, application):
-	headers = { "Content-type": "application/json" }
-	payload = { variable: value }
-	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
-	assert_that(context.response.status_code, equal_to(201))
+    headers = { "Content-type": "application/json" }
+    payload = { variable: value }
+    context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+    assert_that(context.response.status_code, equal_to(201))
 
 @when('I delete an application "{application}"')
 def step_impl(context, application):
-	context.response = context.web_requests.delete(context.api_url + "/app/" + application)
+    context.response = context.web_requests.delete(context.api_url + "/app/" + application)
 
 @then('I get a message confirming the application is removed')
 def step_impl(context):
-	assert_that(context.response.status_code, equal_to(200))
+    assert_that(context.response.status_code, equal_to(200))
+
+@then('I get a message confirming the application was removed or not found')
+def step_impl(context):
+    pass
 
 @when('I update the slug url for application "{application}"')
 def step_impl(context, application):
-	headers = { "Content-type": "application/json" }
-	payload = { "environment": { "SLUG_URL": context.slug_url } } 
-	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
-	assert_that(context.response.status_code, equal_to(201))
+    headers = { "Content-type": "application/json" }
+    payload = { "environment": { "SLUG_URL": context.slug_url } }
+    context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+    assert_that(context.response.status_code, equal_to(201))
 
 @when('I set the slug url for application "{application}" to "{url}"')
 def step_impl(context, application, url):
-	headers = { "Content-type": "application/json" }
-	payload = { "environment": { "SLUG_URL": url } }
-	context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
+    headers = { "Content-type": "application/json" }
+    payload = { "environment": { "SLUG_URL": url } }
+    context.response = context.web_requests.patch(context.api_url + "/app/" + application, data=json.dumps(payload), headers=headers)
 
 @then('I get a return message "{message}"')
 def step_impl(context, message):
@@ -66,40 +70,40 @@ def step_impl(context, message):
 
 @then('I wait for application "{application}" to reach state "{state}"')
 def step_impl(context, application, state):
-	count = 0
-	max_count = 60
-	success = 0
-	while True:
-		context.response = context.web_requests.get(context.api_url + "/app/{}".format(application))
-		data = context.response.json()
-		if data['state'] == state:
-			success = 1
-			break
-		time.sleep(2)
-		count += 1
-		if count >= max_count:
-			break
+    count = 0
+    max_count = 60
+    success = 0
+    while True:
+        context.response = context.web_requests.get(context.api_url + "/app/{}".format(application))
+        data = context.response.json()
+        if data['state'] == state:
+            success = 1
+            break
+        time.sleep(2)
+        count += 1
+        if count >= max_count:
+            break
 
-	assert_that(success, equal_to(1), context.response.text)
+    assert_that(success, equal_to(1), context.response.text)
 
 @then('I am able to access the site on "{url}"')
 def step_impl(context, url):
-	headers = { "Host": "{}".format(url) }
-	response = context.web_requests.get(context.router_url, headers=headers)	
-	assert_that(response.status_code, equal_to(200), context.response.text)
+    headers = { "Host": "{}".format(url) }
+    response = context.web_requests.get(context.router_url, headers=headers)
+    assert_that(response.status_code, equal_to(200), context.response.text)
 
 @then('I am eventually able to access the site on "{url}"')
 def step_impl(context, url):
-	headers = { "Host": "{}".format(url) }
-	for i in range(1,10):
-	    response = context.web_requests.get(context.router_url, headers=headers)	
-            if response.status_code != 200:
-               time.sleep(2)
-               continue
-            else:
-               break
+    headers = { "Host": "{}".format(url) }
+    for i in range(1,10):
+        response = context.web_requests.get(context.router_url, headers=headers)
+        if response.status_code != 200:
+            time.sleep(2)
+            continue
+        else:
+            break
 
-	assert_that(response.status_code, equal_to(200), context.response.text)
+    assert_that(response.status_code, equal_to(200), context.response.text)
 
 @when('I requests the events for "{application}"')
 def step_impl(context, application):
@@ -108,4 +112,18 @@ def step_impl(context, application):
 @then('I get an event document with a "{event_description}" event')
 def step_impl(context, event_description):
     assert_that(context.response.text, contains_string(event_description))
+
+@when('I "{action}" a host "{host}"')
+def step_impl(context, action, host):
+    headers = { "Content-type": "application/json" }
+    payload = { "hosts": [ host ]  }
+    if action == "remove":
+        context.response = context.web_requests.delete(context.api_url + "/global/hosts/", data=json.dumps(payload), headers=headers)
+    if action == "add":
+        context.response = context.web_requests.post(context.api_url + "/global/hosts/", data=json.dumps(payload), headers=headers)
+
+@then('I get a success message from the host endpoint')
+def step_impl(context):
+    assert_that(context.response.status_code, equal_to(201), context.response.text)
+
 

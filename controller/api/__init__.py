@@ -12,7 +12,6 @@ sys.path.append(dirname(realpath(__file__)) + '../' )
 
 from common.applications import *
 from common.globalconfig import *
-from common.datastore import Redis
 from common.paasevents import get_events
 from common.dockerfunctions import DockerFunctions
 
@@ -28,7 +27,6 @@ api = Blueprint('api', __name__,
 def rest_initialization():
     g.global_config = GlobalConfig()
     g.applications = Applications()
-    g.redis_conn = Redis().getConnection()
 
 @api.after_request
 def api_postprocessing(response):
@@ -136,9 +134,22 @@ class HostCollection(restful.Resource):
 
         global_request = request.json
         try:
-            global_response = g.global_config.add_host(global_request)
-        except:
-            restful.abort(400, message = "Boo")
+            global_response = g.global_config.add_hosts(global_request)
+        except Exception as e:
+            restful.abort(400, message = e.message)
+
+        return global_response, 201
+
+    def delete(self):
+        if not request.json:
+            restful.abort(400)
+
+        global_request = request.json
+
+        try:
+            global_response = g.global_config.remove_hosts(global_request)
+        except Exception as e:
+            restful.abort(400, message = e.message)
 
         return global_response, 201
 

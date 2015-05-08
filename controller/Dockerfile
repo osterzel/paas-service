@@ -3,7 +3,7 @@ FROM ubuntu:14.04
 ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get update
-RUN apt-get install -fy python-pip python-dev
+RUN apt-get install -fy python-pip python-dev libmysqlclient-dev
 RUN apt-get clean
 ADD requirements.txt /app/requirements.txt
 RUN pip install -r /app/requirements.txt

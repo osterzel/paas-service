@@ -7,7 +7,7 @@ from os.path import dirname, realpath
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
 from common.paasevents import get_events
-from common.datastore import Redis
+from common.datastore import Datastore
 
 from common.applications import Applications
 
@@ -17,7 +17,7 @@ admin_web = Blueprint('admin_web', __name__,
 @admin_web.before_request
 def rest_initialization():
      g.application = Applications()
-     g.redis_conn = Redis().getConnection() 
+     g.datastore = Datastore()
 
 @admin_web.route('/')
 @admin_web.route('/dashboard')
@@ -57,14 +57,14 @@ def application_admin(app_name):
     events = get_events(app_name)
     events.reverse()
 
-    hosts = g.redis_conn.smembers("hosts")
+    hosts = g.datastore.getContainerHosts()
 
     return render_template('admin/application.html', app = app, apps = apps, events = events, app_logs = [], hosts = hosts )
 
 @admin_web.route("/global/", methods=["GET"])
 @admin_web.route("/global", methods=["GET"])
 def admin_global():
-    hosts = list(g.redis_conn.smembers("hosts"))
+    hosts = g.datastore.getContainerHosts()
 
     return render_template('admin/global.html', hosts = hosts)
 
@@ -73,8 +73,8 @@ def admin_global():
 def admin_logs():
 
     apps = list()
-    for app in list(g.redis_conn.smembers("apps")):
-        apps.append(g.redis_conn.hgetall("app#{}".format(app)))
+    for app in g.datastore.getApplications():
+        apps.append(g.datastore.getApplication(app))
 
     events = get_events()
     events.reverse()

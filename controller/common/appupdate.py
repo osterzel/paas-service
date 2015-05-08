@@ -41,7 +41,11 @@ class ApplicationUpdater():
                     number_of_containers = len(self.nodes)
                 else:
                     number_of_containers = float(app_details['container_count'])
-                number_per_node = number_of_containers / len(self.nodes)
+                try:
+                    number_per_node = number_of_containers / len(self.nodes)
+                except ZeroDivisionError:
+                    self.logger.info("No nodes, setting number_per_node to 0")
+                    number_per_node = 0
             except ValueError:
                 pass
 

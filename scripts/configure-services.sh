@@ -2,9 +2,16 @@
 
 apt-get install -fy redis-tools
 
+DATASTORE=$1
+if [ "$DATASTORE" == "" ]
+then
+	DATASTORE="redis"
+fi
+
 CONTROLLER=`docker ps -a | grep controller | awk '{print $1}'`
 ROUTER=`docker ps -a | grep router | awk '{print $1}'`
 REDIS=`docker ps -a | grep redis | awk '{print $1}'`
+MYSQL=`docker ps -a | grep mysql | awk '{print $1}'`
 RABBITMQ=`docker ps -a | grep rabbitmq | awk '{print $1}'`
 
 cd /services/controller
@@ -25,6 +32,22 @@ else
 	then
 		docker start $REDIS
 	fi
+fi
+
+if [ "$MYSQL" == "" ]
+then
+	docker run -p 3306:3306 -m 64m --name mysql -d tutum/mysql
+	sleep 10 
+	docker exec -i mysql mysql -e "create database paas"
+	docker exec -i mysql mysql -e "grant all on *.* to 'root'@'%' identified by 'dev' with grant option" 
+	docker exec -i mysql mysql -e "flush privileges"
+else
+       #If stopped start it
+        START_CHECK=`docker ps | grep mysql`
+        if [ "$START_CHECK" == "" ]
+        then
+                docker start $MYSQL 
+        fi
 fi
 
 if [ "$RABBITMQ" == "" ]
@@ -57,7 +80,7 @@ if [ "$CONTROLLER" != "" ]
 then
 	docker rm -f $CONTROLLER
 fi
-docker run -d --name controller -m 256m -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -e REDIS_HOST="192.168.0.240" -p 8000:8000 paas-controller
+docker run -d --name controller -m 256m -e DATASTORE=$DATASTORE -e LOG_LEVEL=DEBUG -e RABBITMQ_URI="amqp://paas:paas@192.168.0.240:5672/paas" -e REDIS_HOST="192.168.0.240" -e SQL_ADDRESS="mysql://root:dev@192.168.0.240:3306/paas" -p 8000:8000 paas-controller
 
 if [ "$ROUTER" != "" ]
 then

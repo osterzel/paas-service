@@ -5,21 +5,33 @@ import sys
 
 sys.path.append(dirname(realpath(__file__)) + '../../' )
 
-from common.datastore import Redis
+from common.datastore import Datastore
 
 class GlobalConfig(object):
 
     def __init__(self):
-        self.redis_conn = Redis().getConnection() 
+        self.datastore = Datastore()
 
     def get_hosts(self):
-        hosts = list(self.redis_conn.smembers("hosts"))
+        hosts = self.datastore.getContainerHosts()
         return hosts
 
-    def add_host(self, host):
-	self.redis_conn.sadd("hosts", host)
-	return self.get_hosts()
+    def add_hosts(self, data):
+        '''
+            This accepts a json request of { "hosts" : [ array of hosts to add ] }
+        '''
 
-    def remove_host(self, host):
-	self.redis_conn.srem("hosts", host)
-	return self.get_hosts()
+        for host in data['hosts']:
+            self.datastore.addContainerHost(host)
+
+        return self.get_hosts()
+
+    def remove_hosts(self, data):
+        '''
+            This accepts a json request of { "hosts" : [ array of hosts to remove ] }
+        '''
+
+        for host in data['hosts']:
+            self.datastore.deleteContainerHost(host)
+
+        return self.get_hosts()

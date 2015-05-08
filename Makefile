@@ -34,7 +34,7 @@ save-docker: controller-docker router-docker
 
 vagrant:
 	cd paas-node; make local
-	cd paas-node; vagrant ssh -c 'sudo /services/scripts/configure-services.sh'
+	cd paas-node; vagrant ssh -c 'sudo /services/scripts/configure-services.sh $(DATASTORE)'
 
 clean:
 	cd paas-node; make clean

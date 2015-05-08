@@ -40,5 +40,5 @@ class TestServer(unittest.TestCase):
 
     def test_api_fatal_errors(self):
 	response = self.flask_app.patch("/app/unknownapp", content_type='application/json', data='{ "testjson": "testjson" }')
-        self.assertRegexpMatches(response.data, "Application not found")
+        self.assertRegexpMatches(response.data, "Invalid key")
 	self.assertEquals(500, response.status_code)

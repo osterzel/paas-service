@@ -9,7 +9,7 @@ import logging
 from common.config import Config
 from common.appupdate import ApplicationUpdater
 from common.config import Config
-from common.datastore import Redis
+from common.datastore import Datastore
 
 def process_applications():
 	config = Config()
@@ -20,17 +20,12 @@ def process_applications():
 	logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 	logger = logging.getLogger(__name__)
-	redis_conn = Redis().getConnection()
+	datastore = Datastore()
 	appupdate = ApplicationUpdater()
 
 	while True:
-		apps = redis_conn.lrange('monitor', 0, -1)
-		redis_apps = redis_conn.keys("app#*")
-		apps = []
-		for redis_app in redis_apps:
-			if not ":" in redis_app:
-				name = redis_app.split('#')[1]
-				apps.append(name)
+		apps = datastore.getApplications()
+		print apps
 		for app in apps: 
 				logger.debug("Processing app: {}".format(app))
 				output = appupdate.process_app(app)

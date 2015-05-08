@@ -1,5 +1,16 @@
 Feature: application lifecycle
 
+    Scenario: clean testapp to begin
+       Given I have a paas api service
+       When I delete an application "testapp"	
+       Then I get a message confirming the application was removed or not found 
+
+    @dev
+    Scenario: create host record
+       Given I have a paas api service
+       When I "add" a host "192.168.0.240"
+       Then I get a success message from the host endpoint
+
     Scenario: create an new application
        Given I have a paas api service
        When I create an application "testapp"
@@ -78,3 +89,9 @@ Feature: application lifecycle
 	     Given I have a paas api service
 	     When I delete an application "testapp"	
 	     Then I get a message confirming the application is removed
+
+    @dev
+    Scenario: delete host record
+       Given I have a paas api service
+       When I "remove" a host "192.168.0.240"
+       Then I get a success message from the host endpoint 
