@@ -6,6 +6,7 @@ echo "Starting Nginx"
 
 /usr/sbin/nginx
 echo `cat /var/log/nginx/error.log`
+tail -f /var/log/nginx/access.log &
 
 echo "Starting router engine"
 

@@ -21,9 +21,7 @@ class Notifications(object):
             data = json.loads(body)
 	    self.config_handler.update_config(data)
         except Exception as e:
-	    print e
 	    print e.message
-	    print body 
 
     def establish_connection(self, parameters):
         self.connection = pika.BlockingConnection(parameters)
