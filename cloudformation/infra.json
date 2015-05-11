@@ -49,6 +49,20 @@
     }
   },
   "Resources": {
+    "PAASNotifications":{
+        "Type":"AWS::SNS::Topic",
+        "Properties":{
+          "Subscription":[ 
+            {
+              "Endpoint":{"Fn::GetAtt":["ControllerQueue","Arn"]},
+              "Protocol":"sqs"
+            }
+          ]
+        } 
+    },
+    "ControllerQueue":{
+      "Type":"AWS::SQS::Queue"
+    },
     "ControllerASG": {
       "Properties": {
         "AvailabilityZones": [
@@ -148,6 +162,17 @@
         "MinSize": {
           "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "minInstances" ]
         },
+        "NotificationConfigurations" : [
+          {
+            "TopicARN" : { "Ref" : "PAASNotifications" },
+            "NotificationTypes" : [
+              "autoscaling:EC2_INSTANCE_LAUNCH",
+              "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+              "autoscaling:EC2_INSTANCE_TERMINATE",
+              "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+            ]
+          }
+        ],
         "Tags": [
           {
             "Key": "Name",
@@ -499,6 +524,16 @@
                   "Effect": "Allow",
                   "Resource": "*"
                 },
+		{
+                  "Effect":"Allow",
+ 	          "Action":[
+                    "sqs:DeleteMessage",
+                    "sqs:ReceiveMessage"
+                  ],
+                  "Resource":[
+                    {"Fn::GetAtt":["ControllerQueue","Arn"]}
+                  ] 
+		},
                 {
                   "Effect": "Allow",
                   "Resource": "*",
