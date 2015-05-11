@@ -9,7 +9,7 @@ import time
 class Datastore(object):
     def __init__(self, db=0):
         self.config = Config()
-        self.engine = create_engine(self.config.sql_address, echo=True)
+        self.engine = create_engine(self.config.sql_address, echo=False)
 
         #Now do some validation to confirm the schema we have in the database
         #The basic schema
@@ -112,11 +112,11 @@ class Datastore(object):
 
         #Get application_id
         for k,v in data.items():
-            stmt = self.environment.select().where(self.environment.c.key == k and self.environment.c.application == name)
+            stmt = self.environment.select().where(self.environment.c.key == k).where(self.environment.c.application == name)
             data = self.getConnection().execute(stmt)
 
             stmt = None
-            if v == None:
+            if v == None or v == "":
                 stmt = self.environment.delete().where(self.environment.c.key == k).where(self.environment.c.application == name)
             else:
                 if data.rowcount > 0:

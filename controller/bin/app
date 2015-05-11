@@ -4,6 +4,7 @@ echo "Starting the PAAS controller"
 
 python monitor.py &
 python monitor.py &
+python monitor.py &
 
 python server.py
 
