@@ -117,10 +117,10 @@ class Datastore(object):
 
             stmt = None
             if v == None:
-                stmt = self.environment.delete().where(self.environment.c.key == k and self.environment.c.application == name)
+                stmt = self.environment.delete().where(self.environment.c.key == k).where(self.environment.c.application == name)
             else:
                 if data.rowcount > 0:
-                    stmt = self.environment.update().values(value = v).where(self.environment.c.key == k and self.environment.c.application == name)
+                    stmt = self.environment.update().values(value = v).where(self.environment.c.key == k).where(self.environment.c.application == name)
                 else:
                     stmt = self.environment.insert().values(key = k, value = v, application = name)
 
