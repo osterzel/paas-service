@@ -112,7 +112,7 @@ class Datastore(object):
 
         #Get application_id
         for k,v in data.items():
-            stmt = self.environment.select().where(self.environment.c.key == k and self.environment.c.application == name)
+            stmt = self.environment.select().where(self.environment.c.key == k).where(self.environment.c.application == name)
             data = self.getConnection().execute(stmt)
 
             stmt = None
