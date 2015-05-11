@@ -28,8 +28,35 @@
     "ImageId": {
       "Description": "AMI id. This will be used for controller and docker boxes",
       "Type": "String",
-      "Default": "ami-5d721f2a"
+      "Default": "ami-932248e4"
+    },
+    "dbPassword": {
+      "AllowedPattern": "[a-zA-Z0-9]*",
+      "ConstraintDescription": "must contain only alphanumeric characters.",
+      "Description": "The database admin account password",
+      "MaxLength": "41",
+      "MinLength": "8",
+      "NoEcho": true,
+      "Type": "String"
+    },
+    "dbSize": {
+      "AllowedPattern": "^\\d+$",
+      "ConstraintDescription": "must be a positive integer",
+      "Description": "Database storage size in GB.",
+      "Type": "String"
+    },
+    "dbType": {
+      "AllowedPattern": "^db\\.[a-z0-9]+\\.[a-z0-9]+$",
+      "ConstraintDescription": "db.*.*",
+      "Default": "db.m3.medium",
+      "Description": "Database instance class (e.g. db.m3.medium).",
+      "Type": "String"
+    },
+    "snapshotId": {
+      "Description": "The snapshot id to restore from (or blank for a new database) - changing to blow away existing databse.",
+      "Type": "String"
     }
+
   },
   "Mappings": {
     "InstanceMappings": {
@@ -41,6 +68,11 @@
       "dockerhosts": {
         "maxInstances": "3",
         "minInstances": "3",
+        "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
+      }
+    },
+    "RDSMappings": {
+      "database": {
         "subnets": ["subnet-72852a05","subnet-1e428247","subnet-5980063c"]
       }
     },
@@ -456,7 +488,7 @@
           },
           "\n",
           "service docker stop; umount -f /mnt; mkfs.ext4 /dev/xvdb; mount -t ext4 /dev/xvdb /var/lib/docker && service docker start\n",
-          "python /usr/local/bin/docker-redis.py ", { "Ref": "environment" }, " self"
+          "python /usr/local/bin/manage-hosts.py ", { "Ref": "environment" }, " update"
         ]]}}
 
       },
@@ -545,6 +577,173 @@
         "VolumeType" : "standard",
         "AvailabilityZone" : "eu-west-1a"
       }
+    },
+    "DBAccessSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "PaaS DB Access Security Group",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS db access security group"
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "vpc"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "DBSecurityGroup": {
+      "Properties": {
+        "GroupDescription": "PaaS DB Security Group",
+        "SecurityGroupIngress": [
+          {
+            "FromPort": "3306",
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Ref": "DBAccessSecurityGroup"
+            },
+            "ToPort": "3306"
+          },
+          {
+            "FromPort": "3306",
+            "ToPort": "3306",
+            "IpProtocol": "tcp",
+            "SourceSecurityGroupId": {
+              "Ref": "ControllerSecurityGroup"
+            }
+          }
+        ],
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS db security group"
+                ]
+              ]
+            }
+          }
+        ],
+        "VpcId": {
+          "Ref": "vpc"
+        }
+      },
+      "Type": "AWS::EC2::SecurityGroup"
+    },
+    "Database": {
+      "Properties": {
+        "AllocatedStorage": {
+          "Ref": "dbSize"
+        },
+        "BackupRetentionPeriod": 4,
+        "DBInstanceClass": {
+          "Ref": "dbType"
+        },
+        "DBParameterGroupName": {
+          "Ref": "ParamGroup"
+        },
+        "DBSnapshotIdentifier": {
+          "Ref": "snapshotId"
+        },
+        "DBSubnetGroupName": {
+          "Ref": "SubnetGroup"
+        },
+        "Engine": "MySQL",
+        "EngineVersion": "5.6",
+        "MasterUserPassword": {
+          "Ref": "dbPassword"
+        },
+        "MasterUsername": "PaaS",
+        "MultiAZ": "true",
+        "StorageType": "gp2",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS db instance"
+                ]
+              ]
+            }
+          }
+        ],
+        "VPCSecurityGroups": [
+          {
+            "Ref": "DBSecurityGroup"
+          }
+        ]
+      },
+      "Type": "AWS::RDS::DBInstance"
+    },
+    "ParamGroup": {
+      "Properties": {
+        "Description": "PaaS db parameter group",
+        "Family": "MySQL5.6",
+        "Parameters": {},
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS db parameter group"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::RDS::DBParameterGroup"
+    },
+    "SubnetGroup": {
+      "Properties": {
+        "DBSubnetGroupDescription": "PaaS DB Subnet Group",
+        "SubnetIds": {
+          "Fn::FindInMap": [ "RDSMappings", "database", "subnets"]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                " ",
+                [
+                  {
+                    "Ref": "environment"
+                  },
+                  "PaaS db subnet group"
+                ]
+              ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::RDS::DBSubnetGroup"
     }
   }
 }
