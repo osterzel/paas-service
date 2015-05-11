@@ -116,7 +116,7 @@ class Datastore(object):
             data = self.getConnection().execute(stmt)
 
             stmt = None
-            if v == None:
+            if v == None or v == "":
                 stmt = self.environment.delete().where(self.environment.c.key == k).where(self.environment.c.application == name)
             else:
                 if data.rowcount > 0:
