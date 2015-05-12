@@ -33,7 +33,7 @@ ENV DEB_BUILD_OPTIONS nocheck
 RUN su nginx -c 'dpkg-buildpackage -rfakeroot -uc -b'
 
 WORKDIR /home/nginx
-RUN dpkg -i tengine_2.0.2-1_amd64.deb
+RUN dpkg -i tengine_2.1.0-1_amd64.deb
 
 # Define mountable directories.
 #VOLUME ["/data", "/etc/nginx/sites-enabled", "/var/log/nginx"]
