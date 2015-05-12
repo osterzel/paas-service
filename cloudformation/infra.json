@@ -99,15 +99,7 @@
       "Properties": {
         "AvailabilityZones": [
           {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "a"
-              ]
-            ]
+            "Fn::Join": [ "", [ { "Ref": "AWS::Region" }, "a" ] ]
           }
         ],
         "LaunchConfigurationName": {
@@ -129,15 +121,7 @@
             "Key": "Name",
             "PropagateAtLaunch": true,
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS-controller"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS-controller" ] ]
             }
           }
         ],
@@ -152,37 +136,13 @@
       "Properties": {
         "AvailabilityZones": [
           {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "a"
-              ]
-            ]
+            "Fn::Join": [ "", [ { "Ref": "AWS::Region" }, "a" ] ]
           },
           {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "b"
-              ]
-            ]
+            "Fn::Join": [ "", [ { "Ref": "AWS::Region" }, "b" ] ]
           },
           {
-            "Fn::Join": [
-              "",
-              [
-                {
-                  "Ref": "AWS::Region"
-                },
-                "c"
-              ]
-            ]
+            "Fn::Join": [ "", [ { "Ref": "AWS::Region" }, "c" ] ]
           }
         ],
         "LaunchConfigurationName": {
@@ -210,15 +170,7 @@
             "Key": "Name",
             "PropagateAtLaunch": true,
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS-dockerhosts"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS-dockerhosts" ] ]
             }
           }
         ],
@@ -244,9 +196,15 @@
         },
         "Listeners": [
           {
-            "InstancePort": "80",
+            "InstancePort": "8000",
             "InstanceProtocol": "HTTP",
             "LoadBalancerPort": "80",
+            "Protocol": "HTTP"
+          },
+          {
+            "InstancePort": "8001",
+            "InstanceProtocol": "HTTP",
+            "LoadBalancerPort": "4000",
             "Protocol": "HTTP"
           }
         ],
@@ -262,15 +220,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS Controller load balancer"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS Controller load balancer" ] ]
             }
           }
         ]
@@ -286,22 +236,19 @@
             "FromPort": "80",
             "IpProtocol": "tcp",
             "ToPort": "80"
+          },
+          {
+            "CidrIp": "10.169.0.0/21",
+            "FromPort": "81",
+            "IpProtocol": "tcp",
+            "ToPort": "4000"
           }
         ],
         "Tags": [
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS",
-                  "load balancer security group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS", "load balancer security group" ] ]
             }
           }
         ],
@@ -333,16 +280,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS controller",
-                  "security group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS controller", "security group" ] ]
             }
           }
         ],
@@ -402,16 +340,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS Docker",
-                  "security group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS Docker", "security group" ] ]
             }
           }
         ],
@@ -474,6 +403,11 @@
         "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
           "#!/bin/bash\n",
           "/usr/local/bin/attach_ebs.py $(ec2metadata --instance-id) ", { "Ref": "RedisEBS" } , "\n",
+
+          "echo SQL_ADDRESS='", {"Fn::GetAtt":["Database","Endpoint.Address"]} , "' >> /etc/paas.config\n",
+          "echo SQL_PASSWORD='", { "Ref": "dbPassword" }, "' >> /etc/paas.config\n", 
+	  "echo SQS_NAME='", {"Fn::GetAtt":[ "ControllerQueue", "Arn"]} , "' >> /etc/paas.config\n",
+
           "pip install cli53\n",
           "cli53 rrcreate mergermarket.it controller.", { "Ref": "environment"} ," A $(ec2metadata --local-ipv4) --replace --ttl 60\n",
           {
@@ -620,15 +554,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS db access security group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS db access security group" ] ]
             }
           }
         ],
@@ -663,15 +589,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS db security group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS db security group" ] ]
             }
           }
         ],
@@ -705,21 +623,14 @@
           "Ref": "dbPassword"
         },
         "MasterUsername": "PaaS",
+        "DBName": "paas",
         "MultiAZ": "true",
         "StorageType": "gp2",
         "Tags": [
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS db instance"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS db instance" ] ]
             }
           }
         ],
@@ -740,15 +651,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS db parameter group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS db parameter group" ] ]
             }
           }
         ]
@@ -765,15 +668,7 @@
           {
             "Key": "Name",
             "Value": {
-              "Fn::Join": [
-                " ",
-                [
-                  {
-                    "Ref": "environment"
-                  },
-                  "PaaS db subnet group"
-                ]
-              ]
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS db subnet group" ] ]
             }
           }
         ]

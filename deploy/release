@@ -1,0 +1,60 @@
+#!/bin/bash
+
+ENVIRONMENT=$1
+RELEASE_NUMBER=$2
+
+RABBITMQ=`docker ps -a | grep rabbitmq | awk '{print $1}'`
+
+if [ "$RABBITMQ" == "" ]
+then
+        RABBITMQ=`docker run -p 5672:5672 -p 15672:15672 -m 128m --name rabbitmq -d tutum/rabbitmq`
+        sleep 5
+        #Now get password and setup rabbitmq
+        USER_DETAILS=""
+        while [ "$USER_DETAILS" == "" ]
+        do
+                USER_DETAILS=`docker logs $RABBITMQ | grep curl | awk '{print $3}'`
+                sleep 2
+        done
+        curl -XPUT -u $USER_DETAILS -H 'Content-type: application/json' http://localhost:15672/api/users/paas -d '{ "password": "paas", "tags": "administator" }'
+        curl -XPUT -u $USER_DETAILS -H 'Content-type: application/json' http://localhost:15672/api/vhosts/paas
+        curl -XPUT -u $USER_DETAILS -H 'Content-type: application/json' http://localhost:15672/api/permissions/paas/paas -d '{"scope":"paas","configure":".*","write":".*","read":".*"}'
+        curl -XPUT -u $USER_DETAILS -H 'Content-type: application/json' http://localhost:15672/api/permissions/paas/admin -d '{"scope":"paas","configure":".*","write":".*","read":".*"}'
+        curl -XPUT -u $USER_DETAILS -H 'Content-type: application/json' http://localhost:15672/api/exchanges/paas/paas -d '{"type":"topic","auto_delete":true,"durable":true,"arguments":[]}'
+
+else
+        START_CHECK=`docker ps | grep rabbit`
+        if [ "$START_CHECK" == "" ]
+        then
+                docker start $RABBITMQ
+        fi
+
+fi
+
+IAM_ROLE=$(curl -sL http://169.254.169.254/latest/meta-data/iam/security-credentials)
+ACCESS_KEY=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${IAM_ROLE}/AccessKeyId | grep AccessKeyId | awk '{print $3}' | cut -d'"' -f2)
+SECRET_KEY=$(curl -s http://169.254.169.254/latest/meta-data/iam/security-credentials/${IAM_ROLE}/AccessKeyId | grep SecretAccessKey | awk '{print $3}' | cut -d'"' -f2)
+
+SLUG_PROXY=`docker ps -a | grep slug-proxy | awk '{print $1}'`
+if [ "$SLUG_PROXY" == "" ]
+then
+     SLUG_PROXY=`docker run -d -e S3PROXY_BUCKET_NAME=liveslugbuilderstatefulresources-slugbucket-1bgj3him51uu1 -e S3PROXY_AWS_ACCESS_KEY=${ACCESS_KEY} -e S3PROXY_AWS_SECRET_KEY=${SECRET_KEY} -p 9000:80 -m 128m --name slug-proxy slug-s3-proxy`
+
+fi
+
+
+curl -o /tmp/controller.tgz -s http://controller.${ENVIRONMENT}.mergermarket.it:9000/paas-service/${RELEASE_NUMBER}/controller.tgz
+docker load -i /tmp/controller.tgz
+
+rm /tmp/controller.tgz
+
+if `docker ps -a | grep -q controller`
+then
+      docker rm -f controller
+fi
+
+. /etc/paas.config
+
+docker run -d -e DATASTORE="mysql" -e SQL_ADDRESS="mysql://PaaS:$SQL_PASSWORD@$SQL_ADDRESS:3306/paas" -e REDIS_HOST="controller.${ENVIRONMENT}.mergermarket.it" -e RABBITMQ_URI="amqp://paas:paas@controller.${ENVIRONMENT}.mergermarket.it:5672/paas" -p 8000:8000 --name controller paas-controller:${RELEASE_NUMBER}
+
+docker images | grep paas-controller | grep -v ${RELEASE_NUMBER} | grep -v latest | awk '{print $3}' | xargs -n 1 -r docker rmi
