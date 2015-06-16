@@ -29,3 +29,7 @@ These include
 - Controller
 
 Once they are up and running the controller will be available on http://192.168.0.240:8000/web
+
+#Component Documentation
+
+There is additional documentation under the controller and router folder about each component and how to use them
