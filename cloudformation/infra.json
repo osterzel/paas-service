@@ -180,7 +180,48 @@
       },
       "Type": "AWS::AutoScaling::AutoScalingGroup"
     },
-    "ELB": {
+    "NodesELB": {
+      "Properties": {
+        "ConnectionDrainingPolicy": {
+          "Enabled": true,
+          "Timeout": 10
+        },
+        "CrossZone": "true",
+        "HealthCheck": {
+          "HealthyThreshold": 2,
+          "Interval": 5,
+          "Target": "TCP:80",
+          "Timeout": 4,
+          "UnhealthyThreshold": 2
+        },
+        "Listeners": [
+          {
+            "InstancePort": "80",
+            "InstanceProtocol": "HTTP",
+            "LoadBalancerPort": "80",
+            "Protocol": "HTTP"
+          }
+        ],
+        "SecurityGroups": [
+          {
+            "Ref": "NodesELBSecurityGroup"
+          }
+        ],
+        "Subnets": {
+          "Fn::FindInMap": [ "InstanceMappings", "dockerhosts", "subnets" ]
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [ " ", [ { "Ref": "environment" }, "PaaS Nodes load balancer" ] ]
+            }
+          }
+        ]
+      },
+      "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+    },
+    "ControllerELB": {
       "Properties": {
         "ConnectionDrainingPolicy": {
           "Enabled": true,
@@ -409,7 +450,7 @@
 	  "echo SQS_NAME='", {"Fn::GetAtt":[ "ControllerQueue", "Arn"]} , "' >> /etc/paas.config\n",
 
           "pip install cli53\n",
-          "cli53 rrcreate mergermarket.it controller.", { "Ref": "environment"} ," A $(ec2metadata --local-ipv4) --replace --ttl 60\n",
+          "cli53 rrcreate somewhere.com controller.", { "Ref": "environment"} ," A $(ec2metadata --local-ipv4) --replace --ttl 60\n",
           {
             "Fn::FindInMap": [ "CustomVariables", "deployUserScript", "Value" ]
 
